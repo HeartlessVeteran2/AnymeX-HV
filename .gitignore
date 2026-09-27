@@ -172,3 +172,6 @@ keystore.b64
 # Local Flutter SDK
 flutter_sdk/
 AGENTS.md
+
+# HV: app unit tests live in test/ (the IntelliJ block above ignores test/)
+!/test/
