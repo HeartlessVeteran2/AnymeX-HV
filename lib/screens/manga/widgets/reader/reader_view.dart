@@ -18,6 +18,7 @@ import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
+import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
 
 class ReaderView extends StatefulWidget {
   final ReaderController controller;
@@ -322,10 +323,11 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+      // HV: right-to-left shows the first page on the right
+      children: HvReaderHooks.orderSpread(widget.controller, [
         Expanded(child: _buildImageForPaged(context, spread.page1!, index)),
         Expanded(child: _buildImageForPaged(context, spread.page2!, index)),
-      ],
+      ]),
     );
   }
 

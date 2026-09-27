@@ -1,7 +1,12 @@
 import 'package:anymex/database/isar_models/chapter.dart';
+import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/hv_keys.dart';
+import 'package:anymex/hv/reader/core/dual_page.dart';
 import 'package:anymex/hv/reader/reader_downloads_service.dart';
 import 'package:anymex/hv/reader/series_settings.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
+import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 /// Hooks and helpers for the manga reader (`ReaderController`).
@@ -55,6 +60,28 @@ class HvReaderHooks {
           () => c.navigateToPage(jump.pageNumber - 1));
     });
   }
+
+  /// Dual page spreads for one chapter: first page alone when chosen, wide
+  /// pages (already known to be wide) alone.
+  static List<ReaderPage> dualSpreads(
+      ReaderController c, List<PageUrl> pages, Chapter? chapter) {
+    final pairs = pairPages<PageUrl>(
+      pages,
+      shiftFirst: HvKeys.hvDualPageShift.get<bool>(false),
+      isWide: (p) => (c.pageAspectRatios[p.url] ?? 0) > kWidePageRatio,
+    );
+    return [
+      for (final (first, second) in pairs)
+        ReaderPage(page1: first, page2: second, chapter: chapter),
+    ];
+  }
+
+  /// The two halves of a spread in reading order: right-to-left puts the
+  /// first page on the right.
+  static List<Widget> orderSpread(ReaderController c, List<Widget> halves) =>
+      c.readingDirection.value == MangaPageViewDirection.left
+          ? halves.reversed.toList()
+          : halves;
 
   /// Called when the reader closes.
   static void detach(ReaderController c) {

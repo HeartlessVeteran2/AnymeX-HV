@@ -1,3 +1,5 @@
+import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/reader/core/reader_downloads.dart';
 import 'package:anymex/hv/reader/reader_downloads_service.dart';
 import 'package:anymex/hv/reader/series_settings.dart';
@@ -35,6 +37,24 @@ class _HvSeriesSettingsTileState extends State<HvSeriesSettingsTile> {
               onChanged: (v) =>
                   HvSeriesSettings.setEnabled(widget.controller, v),
             )),
+        Obx(() {
+          if (widget.controller.dualPageMode.value == DualPageMode.off) {
+            return const SizedBox.shrink();
+          }
+          return AnymeXTile.toggle(
+            icon: Icons.auto_stories_outlined,
+            title: 'Dual page: first page alone',
+            subtitle: 'Show the cover by itself so spreads line up',
+            value: HvKeys.hvDualPageShift.get<bool>(false),
+            onChanged: (v) {
+              HvKeys.hvDualPageShift.set(v);
+              // Re-pairs the pages with the new setting.
+              widget.controller
+                  .toggleDualPageMode(widget.controller.dualPageMode.value);
+              setState(() {});
+            },
+          );
+        }),
         AnymeXTile.segmented<HvDeleteAfterReadMode>(
           icon: Icons.auto_delete_outlined,
           title: 'Delete downloads after reading',

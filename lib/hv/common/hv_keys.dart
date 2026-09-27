@@ -41,6 +41,9 @@ enum HvKeys {
   /// Columns in the reader's page gallery (2–4).
   hvGalleryColumns,
 
+  /// Dual page mode: show the first page (cover) alone.
+  hvDualPageShift,
+
   // Downloads while reading
   hvDeleteAfterRead,
 

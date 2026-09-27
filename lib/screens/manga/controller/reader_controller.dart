@@ -227,12 +227,8 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
         newSpreads.add(ReaderPage(page1: page, chapter: current));
       }
     } else {
-      for (int i = 0; i < pageList.length; i += 2) {
-        final page1 = pageList[i];
-        final page2 = (i + 1 < pageList.length) ? pageList[i + 1] : null;
-        newSpreads
-            .add(ReaderPage(page1: page1, page2: page2, chapter: current));
-      }
+      // HV: cover alone / wide pages alone in dual page mode
+      newSpreads.addAll(HvReaderHooks.dualSpreads(this, pageList, current));
     }
 
     if (overscrollToChapter.value) {
@@ -332,12 +328,9 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
           newSpreads.add(ReaderPage(page1: page, chapter: nextChapterObj));
         }
       } else {
-        for (int i = 0; i < nextPages.length; i += 2) {
-          final page1 = nextPages[i];
-          final page2 = (i + 1 < nextPages.length) ? nextPages[i + 1] : null;
-          newSpreads.add(
-              ReaderPage(page1: page1, page2: page2, chapter: nextChapterObj));
-        }
+        // HV: cover alone / wide pages alone in dual page mode
+        newSpreads.addAll(
+            HvReaderHooks.dualSpreads(this, nextPages, nextChapterObj));
       }
 
       newSpreads.add(ReaderPage(

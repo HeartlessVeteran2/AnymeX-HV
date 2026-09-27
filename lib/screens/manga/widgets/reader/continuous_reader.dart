@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
+import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
 
 class ContinuousReaderView extends StatefulWidget {
   final ReaderController controller;
@@ -329,10 +330,11 @@ class _ContinuousReaderViewState extends State<ContinuousReaderView>
     if (!spread.isSpread) return _buildImage(context, spread.page1!, index, spread.chapter);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+      // HV: right-to-left shows the first page on the right
+      children: HvReaderHooks.orderSpread(widget.controller, [
         Expanded(child: _buildImage(context, spread.page1!, index, spread.chapter)),
         Expanded(child: _buildImage(context, spread.page2!, index, spread.chapter)),
-      ],
+      ]),
     );
   }
 
