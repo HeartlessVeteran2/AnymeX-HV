@@ -13,6 +13,7 @@ import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:anymex/hv/reader/ui/series_settings_tile.dart'; // HV
 
 class TabbedReaderSettings {
   final ReaderController controller;
@@ -170,6 +171,7 @@ class _ReadingModePage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           children: [
+            HvSeriesSettingsTile(controller: controller), // HV
             AnymeXTile(
               title: 'Layout',
               subtitle: switch (currentLayout) {

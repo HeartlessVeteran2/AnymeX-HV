@@ -29,6 +29,7 @@ import 'package:vibration/vibration.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../models/reader/tap_zones.dart';
 import '../../../repositories/tap_zone_repository.dart';
+import 'package:anymex/hv/reader/series_settings.dart'; // HV
 
 enum LoadingState { loading, loaded, error }
 
@@ -1033,6 +1034,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     ReaderKeys.displayRefreshInterval.set(displayRefreshInterval.value);
     ReaderKeys.displayRefreshColor.set(displayRefreshColor.value);
     ReaderKeys.imageFilterQuality.set(imageFilterQuality.value);
+    HvSeriesSettings.afterSave(this); // HV: keep series values out of globals
   }
 
   void _setupPositionListener() {
@@ -1439,6 +1441,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     _initializeControllers();
     _getPreferences();
     _applyAutoWebtoonMode();
+    HvSeriesSettings.attach(this); // HV: per-series reader settings
 
     ever(currentPageIndex, (indexVal) {
       preloadNextPages(indexVal - 1);
