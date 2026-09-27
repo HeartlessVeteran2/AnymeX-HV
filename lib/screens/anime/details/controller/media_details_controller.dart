@@ -556,9 +556,9 @@ class MediaDetailsController extends GetxController {
         CommentPreloader.to.preloadComments(media.value);
       } catch (e) {
         if (_isStaleSourceRequest(reqId)) return;
-        // HV: a saved link that stopped working is dropped; search again
+        // HV: a saved link that failed is skipped this session; search again
         if (hvSaved != null) {
-          await HvDetailsHooks.forgetMapping(media.value);
+          HvDetailsHooks.skipSavedMapping(media.value);
           if (_isStaleSourceRequest(reqId)) return;
           return _fetchContentFromSource();
         }
