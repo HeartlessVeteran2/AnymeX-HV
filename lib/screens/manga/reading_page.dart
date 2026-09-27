@@ -1,4 +1,5 @@
 import 'package:anymex/database/isar_models/chapter.dart';
+import 'package:anymex/hv/reader/reader_keys.dart'; // HV
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
 import 'package:anymex/screens/manga/widgets/reader/reader_view.dart';
@@ -51,6 +52,7 @@ class _ReadingPageState extends State<ReadingPage> {
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
+      if (HvReaderKeys.handle(controller, event.logicalKey)) return; // HV: page by spread
       final currentPage = controller.currentPageIndex.value;
       final totalPages = controller.pageList.length;
 
