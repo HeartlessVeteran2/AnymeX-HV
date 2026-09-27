@@ -79,6 +79,33 @@ class HvReaderHooks {
     ];
   }
 
+  static final Expando<Timer> _respread = Expando('hvRespread');
+
+  /// Paged mode: records a page's shape when its image loads, and re-pairs
+  /// the spreads when a page shown paired turns out to be wide.
+  ///
+  /// Page shapes were only recorded by the continuous reader, and spreads
+  /// are built before any image loads, so "wide pages alone" never applied
+  /// in dual page mode. This re-pairs once per newly found wide page
+  /// (debounced) and keeps the reader on the same page.
+  static void onPagedImageLoaded(
+      ReaderController c, String url, double width, double height) {
+    if (width <= 0 || height <= 0) return;
+    final wasWide = (c.pageAspectRatios[url] ?? 0) > kWidePageRatio;
+    c.updatePageAspectRatio(url, width, height);
+    if (wasWide || width / height <= kWidePageRatio || !c.isDualPage) return;
+    final paired = c.spreads.any((s) =>
+        s.page2 != null && (s.page1?.url == url || s.page2?.url == url));
+    if (!paired) return;
+    _respread[c]?.cancel();
+    _respread[c] = Timer(const Duration(milliseconds: 300), () {
+      if (c.isClosed) return;
+      final page = c.currentPageIndex.value;
+      c.toggleDualPageMode(c.dualPageMode.value); // recomputes the spreads
+      c.navigateToPage(page - 1);
+    });
+  }
+
   /// The two halves of a spread in reading order: right-to-left puts the
   /// first page on the right.
   static List<Widget> orderSpread(ReaderController c, List<Widget> halves) =>
