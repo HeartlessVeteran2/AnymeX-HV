@@ -1,6 +1,10 @@
+import 'package:anymex/database/isar_models/custom_list.dart';
 import 'package:anymex/database/kv_helper.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
+import 'package:anymex/hv/library_update/core/list_keys.dart';
 import 'package:anymex/hv/library_update/core/update_filter.dart';
+import 'package:anymex/main.dart' show isar;
+import 'package:isar_community/isar.dart';
 
 /// Library update settings, read from and written to the settings store.
 class LibraryUpdateSettings {
@@ -55,11 +59,26 @@ class LibraryUpdateSettings {
   static set autoDownloadLists(Set<String> v) =>
       HvKeys.hvAutoDownloadLists.set(v.toList());
 
+  /// The skip rules for a run. Included lists that were deleted are
+  /// dropped, so a deleted list can't leave the run checking nothing.
   static UpdateFilterSettings get filter => UpdateFilterSettings(
         skipWithUnread: skipUnread,
         skipCompleted: skipCompleted,
         skipNotStarted: skipNotStarted,
-        includeLists: includeLists,
+        includeLists: hvPruneListKeys(includeLists, _existingListKeys()),
         excludeLists: excludeLists,
       );
+
+  /// Keeps the list choices pointing at a list after it's renamed.
+  static void renameList(int typeIndex, String oldName, String newName) {
+    final from = listKey(typeIndex, oldName), to = listKey(typeIndex, newName);
+    includeLists = hvRenameListKey(includeLists, from, to);
+    excludeLists = hvRenameListKey(excludeLists, from, to);
+    autoDownloadLists = hvRenameListKey(autoDownloadLists, from, to);
+  }
+
+  static Set<String> _existingListKeys() => {
+        for (final l in isar.customLists.where().findAllSync())
+          if (l.listName != null) listKey(l.mediaTypeIndex, l.listName!),
+      };
 }

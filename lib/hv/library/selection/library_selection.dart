@@ -21,6 +21,23 @@ class HvLibrarySelection {
 
   static bool get active => selected.isNotEmpty;
 
+  /// Whether a selection of [type] titles is in progress. A selection made
+  /// on another media type doesn't count: ids are per type, so acting on it
+  /// here would add the wrong titles to this type's lists.
+  static bool activeFor(ItemType type) => active && _type == type;
+
+  /// Selects every title in [items].
+  static void selectAll(Iterable<OfflineMedia> items, ItemType type) {
+    if (_type != type) {
+      selected.clear();
+      _type = type;
+    }
+    selected.addAll([
+      for (final m in items)
+        if ((m.mediaId ?? '').isNotEmpty) m.mediaId!,
+    ]);
+  }
+
   static void toggle(OfflineMedia item, ItemType type) {
     final id = item.mediaId;
     if (id == null || id.isEmpty) return;
@@ -35,7 +52,7 @@ class HvLibrarySelection {
 
   /// Tap on a card: toggles while selecting, otherwise opens the title.
   static void onTap(OfflineMedia item, ItemType type, VoidCallback open) {
-    if (active) {
+    if (activeFor(type)) {
       toggle(item, type);
     } else {
       open();
@@ -57,7 +74,8 @@ class HvSelectableCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Obx(() {
-      final isSelected = HvLibrarySelection.selected.contains(item.mediaId);
+      final isSelected = HvLibrarySelection.selected.contains(item.mediaId) &&
+          HvLibrarySelection._type?.index == item.mediaTypeIndex;
       if (!isSelected) return child;
       return Stack(
         children: [
@@ -110,7 +128,9 @@ class HvLibrarySelectionBar extends StatelessWidget {
       right: 12,
       bottom: MediaQuery.paddingOf(context).bottom + 96,
       child: Obx(() {
-        if (!HvLibrarySelection.active) return const SizedBox.shrink();
+        if (!HvLibrarySelection.activeFor(type())) {
+          return const SizedBox.shrink();
+        }
         final count = HvLibrarySelection.selected.length;
         final listName = currentListName();
         return Material(
@@ -130,10 +150,8 @@ class HvLibrarySelectionBar extends StatelessWidget {
                 IconButton(
                   tooltip: 'Select all',
                   icon: const Icon(Icons.select_all_rounded),
-                  onPressed: () => HvLibrarySelection.selected.addAll([
-                    for (final m in visibleItems())
-                      if ((m.mediaId ?? '').isNotEmpty) m.mediaId!,
-                  ]),
+                  onPressed: () =>
+                      HvLibrarySelection.selectAll(visibleItems(), type()),
                 ),
                 IconButton(
                   tooltip: 'Add to list',

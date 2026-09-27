@@ -11,6 +11,7 @@ import 'package:anymex/hv/library/core/library_search.dart';
 import 'package:anymex/hv/library/selection/library_selection.dart';
 import 'package:anymex/hv/library_update/core/update_filter.dart';
 import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
+import 'package:anymex/hv/library_update/update_settings.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/main.dart' show isar;
@@ -88,8 +89,10 @@ class HvLibraryHooks {
         .toList();
   }
 
-  /// Keeps a hidden list hidden after it's renamed.
+  /// Keeps a hidden list hidden, and the update and auto-download list
+  /// choices pointing at it, after it's renamed.
   static void onListRenamed(ItemType type, String oldName, String newName) {
+    LibraryUpdateSettings.renameList(type.index, oldName, newName);
     final set = hiddenLists;
     if (set.remove(listKey(type.index, oldName))) {
       set.add(listKey(type.index, newName));
