@@ -40,4 +40,15 @@ enum HvKeys {
   // Reader
   /// Columns in the reader's page gallery (2–4).
   hvGalleryColumns,
+
+  // Downloads while reading
+  hvDeleteAfterRead,
+
+  /// Read chapters to keep downloaded before deleting (0 = delete the
+  /// chapter just finished).
+  hvDeleteAfterReadKeep,
+
+  /// Chapters to download ahead while reading; 0 = off.
+  hvDownloadAhead,
+  hvDownloadAheadWifiOnly,
 }

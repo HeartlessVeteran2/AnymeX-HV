@@ -233,8 +233,8 @@ class _SettingsPageState extends State<SettingsPage> {
             // HV: library update checker settings
             _buildTile(
               icon: Icons.new_releases_outlined,
-              title: "Library Updates",
-              description: "Check your library for new chapters",
+              title: "Updates & Downloads",
+              description: "New chapters, auto-download, download ahead",
               destination: HvUpdateSettingsScreen.new,
             ),
           ],

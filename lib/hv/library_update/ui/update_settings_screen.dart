@@ -1,4 +1,6 @@
 import 'package:anymex/database/isar_models/custom_list.dart';
+import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/library_update/core/update_filter.dart';
 import 'package:anymex/hv/library_update/update_settings.dart';
 import 'package:anymex/hv/notifications/hv_notifications.dart';
@@ -116,7 +118,7 @@ class _HvUpdateSettingsScreenState extends State<HvUpdateSettingsScreen> {
   Widget build(BuildContext context) {
     return AnymeXScaffold(
       showHeader: true,
-      headerTitle: 'Library Updates',
+      headerTitle: 'Updates & Downloads',
       body: Builder(
         builder: (ctx) => SingleChildScrollView(
           padding:
@@ -267,6 +269,47 @@ class _HvUpdateSettingsScreenState extends State<HvUpdateSettingsScreen> {
                         onSave: (v) =>
                             LibraryUpdateSettings.autoDownloadLists = v,
                       ),
+                    ),
+                ],
+              ),
+              AnymeXSectionBuilder(
+                title: 'While reading',
+                children: [
+                  AnymeXTile.segmented<int>(
+                    icon: Icons.downloading_rounded,
+                    title: 'Download ahead',
+                    subtitle: 'Next chapters to download once you are 80% '
+                        'through a chapter',
+                    value: HvKeys.hvDownloadAhead.get<int>(0).clamp(0, 5),
+                    options: const [0, 1, 2, 3, 5],
+                    optionLabelTransformer: (v) => v == 0 ? 'Off' : '$v',
+                    onChanged: (v) =>
+                        setState(() => HvKeys.hvDownloadAhead.set(v)),
+                  ),
+                  AnymeXTile.toggle(
+                    icon: Icons.wifi_rounded,
+                    title: 'Download ahead only on Wi-Fi',
+                    value: HvKeys.hvDownloadAheadWifiOnly.get<bool>(true),
+                    onChanged: (v) => setState(
+                        () => HvKeys.hvDownloadAheadWifiOnly.set(v)),
+                  ),
+                  AnymeXTile.toggle(
+                    icon: Icons.auto_delete_outlined,
+                    title: 'Delete downloads after reading',
+                    subtitle: 'Titles can override this in the reader settings',
+                    value: HvKeys.hvDeleteAfterRead.get<bool>(false),
+                    onChanged: (v) =>
+                        setState(() => HvKeys.hvDeleteAfterRead.set(v)),
+                  ),
+                  if (HvKeys.hvDeleteAfterRead.get<bool>(false))
+                    AnymeXTile.segmented<int>(
+                      icon: Icons.history_rounded,
+                      title: 'Keep the last read chapters',
+                      subtitle: 'Read chapters to keep before deleting',
+                      value: HvKeys.hvDeleteAfterReadKeep.get<int>(0).clamp(0, 4),
+                      options: const [0, 1, 2, 3, 4],
+                      onChanged: (v) =>
+                          setState(() => HvKeys.hvDeleteAfterReadKeep.set(v)),
                     ),
                 ],
               ),

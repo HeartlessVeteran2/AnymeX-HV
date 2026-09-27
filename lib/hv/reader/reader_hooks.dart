@@ -1,3 +1,5 @@
+import 'package:anymex/database/isar_models/chapter.dart';
+import 'package:anymex/hv/reader/reader_downloads_service.dart';
 import 'package:anymex/hv/reader/series_settings.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
 import 'package:get/get.dart';
@@ -19,6 +21,20 @@ class HvReaderHooks {
   /// Called from `ReaderController.init` after it loaded its settings.
   static void attach(ReaderController c) {
     HvSeriesSettings.attach(c);
+
+    // Delete-after-read runs when the reader moves off a finished chapter;
+    // download-ahead checks progress on every page change.
+    Chapter? shown = c.currentChapter.value;
+    ever<Chapter?>(c.currentChapter, (chapter) {
+      final left = shown;
+      shown = chapter;
+      if (left != null && left != chapter) {
+        HvReaderDownloads.onChapterLeft(c, left);
+      }
+    });
+    ever<int>(c.currentPageIndex,
+        (page) => HvReaderDownloads.onPageChanged(c, page));
+
     ever<LoadingState>(c.loadingState, (state) {
       final jump = _pendingJump;
       if (state != LoadingState.loaded || jump == null) return;
@@ -38,6 +54,11 @@ class HvReaderHooks {
       Future.delayed(const Duration(milliseconds: 400),
           () => c.navigateToPage(jump.pageNumber - 1));
     });
+  }
+
+  /// Called when the reader closes.
+  static void detach(ReaderController c) {
+    HvReaderDownloads.onChapterLeft(c, c.currentChapter.value);
   }
 
   /// Shows [spreadIndex] in either reading mode. The reader's own page

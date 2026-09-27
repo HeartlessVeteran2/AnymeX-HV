@@ -566,6 +566,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    HvReaderHooks.detach(this); // HV: delete-after-read on exit
 
     Future.microtask(() {
       _performFinalSave();
