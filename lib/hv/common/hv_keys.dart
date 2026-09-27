@@ -54,4 +54,9 @@ enum HvKeys {
   /// Chapters to download ahead while reading; 0 = off.
   hvDownloadAhead,
   hvDownloadAheadWifiOnly,
+
+  // Discovery
+  /// Feed rows (JSON list, see `FeedRow`).
+  hvFeedRows,
+  hvFeedHideLibrary,
 }
