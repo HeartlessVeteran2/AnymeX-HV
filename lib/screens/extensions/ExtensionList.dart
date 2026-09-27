@@ -1,3 +1,4 @@
+import 'package:anymex/hv/extensions/extension_error_snackbar.dart'; // HV
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/utils/language.dart';
 import 'package:anymex/utils/theme_extensions.dart';
@@ -583,6 +584,7 @@ class _ExtensionListState extends State<ExtensionList>
 
   Future<void> _updateAllExtensions(List<Source> updateEntries) async {
     if (updateEntries.isEmpty) return;
+    final hvFailed = <String>[]; // HV
     try {
       final futures = updateEntries.map((source) async {
         final id = source.id?.toString();
@@ -595,6 +597,7 @@ class _ExtensionListState extends State<ExtensionList>
           await sourceController.refreshSourceState(source);
         } catch (e) {
           debugPrint('Error updating extension ${source.name}: $e');
+          hvFailed.add(source.name ?? 'Unknown'); // HV
         } finally {
           if (id != null) {
             sourceController.updatingSourceIds.remove(id);
@@ -602,6 +605,7 @@ class _ExtensionListState extends State<ExtensionList>
         }
       });
       await Future.wait(futures);
+      hvShowUpdateFailures(hvFailed); // HV
     } catch (e) {
       debugPrint('Error updating extensions: $e');
     }
