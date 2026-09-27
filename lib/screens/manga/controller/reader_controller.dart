@@ -1801,6 +1801,9 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   void chapterNavigator(bool next) async {
     final current = currentChapter.value;
     if (current == null) return;
+    // HV: show the transition page first when chapters are missing or
+    // "Always show chapter transition" is on
+    if (HvReaderHooks.interceptChapterNav(this, next)) return;
 
     _performSave(reason: "Saving before chapter is changed");
 

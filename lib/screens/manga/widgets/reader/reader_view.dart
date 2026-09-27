@@ -19,6 +19,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
 import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
+import 'package:anymex/hv/reader/ui/transition_overlay.dart'; // HV
 
 class ReaderView extends StatefulWidget {
   final ReaderController controller;
@@ -204,15 +205,8 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
         );
       }
 
-      if (widget.controller.colorFilterEnabled.value) {
-        final colorValue = widget.controller.colorFilterValue.value;
-        final blendModeIndex = widget.controller.colorFilterMode.value;
-        final blendMode = _blendModeFromIndex(blendModeIndex);
-        readerContent = ColorFiltered(
-          colorFilter: ColorFilter.mode(Color(colorValue), blendMode),
-          child: readerContent,
-        );
-      }
+      // HV: the color filter is drawn once, by ReaderContentOverlay below;
+      // it was also applied here, doubling the tint.
 
       return Stack(
         children: [
@@ -237,11 +231,14 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
             ),
           ReaderContentOverlay(controller: widget.controller),
           DisplayRefreshOverlay(host: _displayRefreshHost),
+          HvTransitionOverlay(controller: widget.controller), // HV
         ],
       );
     });
   }
 
+  // HV: unused since the duplicate color filter was removed (kept for upstream)
+  // ignore: unused_element
   static BlendMode _blendModeFromIndex(int index) {
     const modes = [
       BlendMode.srcOver,

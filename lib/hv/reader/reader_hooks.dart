@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/database/kv_helper.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
@@ -82,6 +84,53 @@ class HvReaderHooks {
       c.readingDirection.value == MangaPageViewDirection.left
           ? halves.reversed.toList()
           : halves;
+
+  // ---- chapter transition ------------------------------------------------
+
+  static final Expando<bool> _bypassTransition = Expando('hvTransition');
+
+  /// Called at the start of `chapterNavigator`. Shows the chapter transition
+  /// page first when "Always show chapter transition" is on or chapters are
+  /// missing in between — the reader had the setting and the logic
+  /// (`maybeShowChapterTransition`) but nothing ever called it. Returns true
+  /// when the navigation was handled here.
+  static bool interceptChapterNav(ReaderController c, bool next) {
+    if (_bypassTransition[c] == true) {
+      _bypassTransition[c] = false;
+      return false;
+    }
+    final i = c.currentSpreadIndex.value;
+    // Already looking at an inline transition page: just go.
+    if (i >= 0 && i < c.spreads.length && c.spreads[i].isTransition) {
+      return false;
+    }
+    // maybeShowChapterTransition either shows the transition or calls
+    // chapterNavigator again, which must then pass straight through.
+    _bypassTransition[c] = true;
+    c.maybeShowChapterTransition(next);
+    _bypassTransition[c] = false;
+    return true;
+  }
+
+  static void continueTransition(ReaderController c) {
+    c.showingTransition.value = false;
+    _bypassTransition[c] = true;
+    c.chapterNavigator(c.transitionIsNext.value);
+  }
+
+  static void cancelTransition(ReaderController c) =>
+      c.showingTransition.value = false;
+
+  // ---- settings -----------------------------------------------------------
+
+  static final Expando<Timer> _saveTimers = Expando('hvSave');
+
+  /// Saves reader settings shortly after the last change (for sliders).
+  static void saveSoon(ReaderController c) {
+    _saveTimers[c]?.cancel();
+    _saveTimers[c] =
+        Timer(const Duration(milliseconds: 400), c.savePreferences);
+  }
 
   /// Called when the reader closes.
   static void detach(ReaderController c) {

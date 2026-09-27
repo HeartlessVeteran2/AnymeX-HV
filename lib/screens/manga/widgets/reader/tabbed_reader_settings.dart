@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:anymex/hv/reader/ui/series_settings_tile.dart'; // HV
+import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
 
 class TabbedReaderSettings {
   final ReaderController controller;
@@ -580,7 +581,10 @@ class _GeneralPage extends StatelessWidget {
                 min: 1,
                 max: 15,
                 divisions: 14,
-                onChanged: (v) => controller.preloadPages.value = v.toInt(),
+                onChanged: (v) {
+                  controller.preloadPages.value = v.toInt();
+                  HvReaderHooks.saveSoon(controller); // HV: it never saved
+                },
               ),
             ),
             if (!Platform.isAndroid && !Platform.isIOS) ...[
