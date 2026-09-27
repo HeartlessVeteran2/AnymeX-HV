@@ -49,7 +49,8 @@ void restoreRepoLists(
       if (!_supports(manager, type)) continue;
       final rx = manager.getReposRx(type);
       if (rx.value.isNotEmpty) continue;
-      final repos = decodeStoredRepos(read(repoStorageKey(manager.id, type)));
+      final repos = decodeStoredRepos(read(repoStorageKey(manager.id, type)),
+          managerId: manager.id);
       if (repos.isNotEmpty) rx.value = repos;
     }
   }
@@ -60,15 +61,26 @@ String repoStorageKey(String managerId, ItemType type) =>
     '$managerId${type.name}Repos';
 
 /// Decodes a stored repo list, skipping malformed entries.
-List<Repo> decodeStoredRepos(List<String>? encoded) {
+///
+/// Removing a repo from the screen looks its manager up by
+/// [Repo.managerId], so entries saved without one get [managerId].
+List<Repo> decodeStoredRepos(List<String>? encoded, {String? managerId}) {
   if (encoded == null) return const [];
   final repos = <Repo>[];
   for (final raw in encoded) {
     try {
       final json = jsonDecode(raw);
-      if (json is Map<String, dynamic> && json['url'] is String) {
-        repos.add(Repo.fromJson(json));
-      }
+      if (json is! Map<String, dynamic> || json['url'] is! String) continue;
+      final repo = Repo.fromJson(json);
+      repos.add(repo.managerId != null || managerId == null
+          ? repo
+          : Repo(
+              url: repo.url,
+              name: repo.name,
+              iconUrl: repo.iconUrl,
+              extensions: repo.extensions,
+              managerId: managerId,
+            ));
     } catch (_) {}
   }
   return repos;

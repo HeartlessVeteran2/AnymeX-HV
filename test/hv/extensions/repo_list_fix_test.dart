@@ -79,6 +79,14 @@ void main() {
     expect(decodeStoredRepos(null), isEmpty);
   });
 
+  test('gives entries saved without a manager id the owning manager', () {
+    final m = _FakeManager('mangayomi');
+    restoreRepoLists([m], (key) => [jsonEncode({'url': 'https://old/repo'})]);
+
+    // Removing a repo finds its manager by this id.
+    expect(m.getReposRx(ItemType.manga).value.single.managerId, 'mangayomi');
+  });
+
   test('uses the same key the bridge stores under', () {
     expect(repoStorageKey('mangayomi', ItemType.manga), 'mangayomimangaRepos');
   });
