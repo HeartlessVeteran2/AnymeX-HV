@@ -17,8 +17,9 @@ on:
 env:
   FLUTTER_VERSION: "3.41.6"
 
+# Manual (APK) runs get their own group so a push doesn't cancel them.
 concurrency:
-  group: hv-ci-${{ github.ref }}
+  group: hv-ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
