@@ -30,6 +30,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../models/reader/tap_zones.dart';
 import '../../../repositories/tap_zone_repository.dart';
 import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
+import 'package:anymex/hv/extensions/source_calls.dart'; // HV
 import 'package:anymex/hv/reader/series_settings.dart'; // HV
 
 enum LoadingState { loading, loaded, error }
@@ -271,8 +272,12 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       files.sort((a, b) => a.path.compareTo(b.path));
       return files.map((f) => PageUrl(f.path)).toList();
     } else if (chapter.link != null && chapter.link!.isNotEmpty) {
-      return await sourceController.activeMangaSource.value!.methods
-          .getPageList(DEpisode(episodeNumber: '1', url: chapter.link!));
+      return await hvWithTimeout( // HV: time limit, clear error without a source
+          hvActiveSource(sourceController.activeMangaSource.value)
+              .methods
+              .getPageList(DEpisode(episodeNumber: '1', url: chapter.link!)),
+          action: 'Loading pages',
+          limit: HvSourceTimeouts.pages);
     }
     return [];
   }
@@ -1880,8 +1885,12 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
 
         data = files.map((f) => PageUrl(f.path)).toList();
       } else {
-        data = await sourceController.activeMangaSource.value!.methods
-            .getPageList(DEpisode(episodeNumber: '1', url: url));
+        data = await hvWithTimeout( // HV: time limit, clear error without a source
+            hvActiveSource(sourceController.activeMangaSource.value)
+                .methods
+                .getPageList(DEpisode(episodeNumber: '1', url: url)),
+            action: 'Loading pages',
+            limit: HvSourceTimeouts.pages);
       }
       if (data.isNotEmpty) {
         pageList.assignAll(data);
