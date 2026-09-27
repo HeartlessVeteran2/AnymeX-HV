@@ -29,6 +29,11 @@ import 'package:anymex/widgets/header/header.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:flutter/services.dart';
 import 'package:anymex/controllers/media_mode_controller.dart';
+import 'package:anymex/hv/library/core/library_filter.dart'; // HV
+import 'package:anymex/hv/library/library_hooks.dart'; // HV
+import 'package:anymex/hv/library/selection/library_selection.dart'; // HV
+import 'package:anymex/hv/library/ui/grouped_library.dart'; // HV
+import 'package:anymex/hv/library/ui/library_filter_sheet.dart'; // HV
 import 'package:anymex/hv/library_update/ui/library_updates_button.dart'; // HV
 
 class MyLibrary extends StatefulWidget {
@@ -131,6 +136,8 @@ class _MyLibraryState extends State<MyLibrary>
                       onTap: controller.toggleSearch,
                     ),
                     2.width(),
+                    HvLibraryFilterButton(type: controller.type), // HV
+                    2.width(),
                     HeaderActionButton(
                       icon: Icons.sort_rounded,
                       onTap: () => showLibrarySortSheet(context, controller),
@@ -168,6 +175,16 @@ class _MyLibraryState extends State<MyLibrary>
                 statusBarColor: Colors.transparent,
               ),
             ),
+            // HV: actions for selected titles
+            HvLibrarySelectionBar(
+              type: () => controller.type.value,
+              currentListName: () {
+                final i = controller.selectedListIndex.value;
+                final names = controller.customListNames;
+                return i < 0 || i >= names.length ? null : names[i];
+              },
+              visibleItems: () => controller.processedItems,
+            ),
           ],
         ),
       );
@@ -199,6 +216,14 @@ class _LibraryContent extends StatelessWidget {
 
       if (controller.selectedListIndex.value == -1) {
         return _buildHistoryView(context, data);
+      } else if (HvLibraryHooks.groupBy(controller.type.value) !=
+          HvLibraryGroupBy.none) {
+        // HV: grouped library
+        return HvGroupedLibrary(
+          groups: HvLibraryHooks.group(data, controller.type.value),
+          gridDelegate: _getSliverDelegate(context),
+          itemBuilder: _buildGridItem,
+        );
       } else {
         return _buildGridView(context, data);
       }
@@ -245,23 +270,33 @@ class _LibraryContent extends StatelessWidget {
       sliver: SliverGrid(
         gridDelegate: _getSliverDelegate(context),
         delegate: SliverChildBuilderDelegate(
-          (context, i) {
-            OfflineMedia item = items[i];
-            final tag =
-                '${item.mediaId ?? item.id}-library-grid-${controller.type.value.name}';
-            return AnymexOnTap(
-              margin: 0,
-              scale: 1,
-              onTap: () => _handleItemTap(context, item, items, i, tag),
-              child: MediaCardGate(
-                itemData: items[i],
-                tag: tag,
-                variant: DataVariant.library,
-                type: controller.type.value,
-              ),
-            );
-          },
+          (context, i) => _buildGridItem(context, items, i),
           childCount: items.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridItem(
+      BuildContext context, List<OfflineMedia> items, int i) {
+    OfflineMedia item = items[i];
+    final tag =
+        '${item.mediaId ?? item.id}-library-grid-${controller.type.value.name}';
+    return AnymexOnTap(
+      margin: 0,
+      scale: 1,
+      // HV: long-press selects; taps toggle while selecting
+      onTap: () => HvLibrarySelection.onTap(item, controller.type.value,
+          () => _handleItemTap(context, item, items, i, tag)),
+      onLongPress: () =>
+          HvLibrarySelection.onLongPress(item, controller.type.value),
+      child: HvSelectableCard(
+        item: item,
+        child: MediaCardGate(
+          itemData: items[i],
+          tag: tag,
+          variant: DataVariant.library,
+          type: controller.type.value,
         ),
       ),
     );

@@ -31,4 +31,9 @@ enum HvKeys {
   /// Lists (`"<typeIndex>|<list name>"`) whose new chapters are downloaded;
   /// empty = whole library.
   hvAutoDownloadLists,
+
+  // Library
+  /// Hidden lists (`"<typeIndex>|<list name>"`).
+  hvHiddenLists,
+  hvShowHiddenLists,
 }

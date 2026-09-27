@@ -9,6 +9,7 @@ import 'package:anymex/widgets/non_widgets/snackbar.dart';
 import 'package:anymex_extension_runtime_bridge/Models/Source.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:anymex/hv/library/library_hooks.dart'; // HV
 
 enum SortType {
   title,
@@ -44,7 +45,9 @@ class LibraryController extends GetxController {
   late bool _isUnified;
 
   List<OfflineMedia> get processedItems {
-    final searched = applySearch(rawItems, searchQuery.value);
+    // HV: search syntax (-word, "phrase", src:, status:) and library filters
+    final searched =
+        HvLibraryHooks.process(rawItems, searchQuery.value, type.value);
     return applySorting(searched);
   }
 
@@ -72,14 +75,16 @@ class LibraryController extends GetxController {
     });
     
     _setupCustomListsSubscription();
+    HvLibraryHooks.attach(_setupCustomListsSubscription, selectedListIndex); // HV
   }
 
   void _setupCustomListsSubscription() {
     _customListsSubscription?.cancel();
     _customListsSubscription = offlineStorage.watchCustomLists(type.value).listen((lists) {
-      final filteredLists = lists
+      final filteredLists = HvLibraryHooks.visibleLists( // HV: hidden lists
+          lists
           .where((l) => l.mediaTypeIndex == type.value.index)
-          .toList();
+          .toList(), type.value);
       customLists.value = filteredLists;
       customListNames.value = filteredLists.map((l) => l.listName ?? '').toList();
       
