@@ -116,7 +116,11 @@ jobs:
       - name: Stub .env
         run: |
           printf 'AL_CLIENT_ID=0\nAL_CLIENT_SECRET=0\nSIMKL_CLIENT_ID=0\nSIMKL_CLIENT_SECRET=0\nMAL_CLIENT_ID=0\nMAL_CLIENT_SECRET=0\nCALLBACK_SCHEME=anymex://callback\nCOMMENTS_BASE_URL=https://whzwmfxngelicmjyxwmr.supabase.co/functions/v1\n' > .env
-      - run: flutter pub get
+      # integration_test is added here, not in pubspec.yaml: Flutter bundles
+      # dev-dependency plugins into debug builds, and its test libraries make
+      # R8 fail the Android debug build.
+      - name: Add integration_test (this run only)
+        run: flutter pub add 'dev:integration_test:{"sdk":"flutter"}'
       - name: Runtime tests
         run: |
           set +e
