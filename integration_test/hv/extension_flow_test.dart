@@ -36,6 +36,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+// ignore: depend_on_referenced_packages
+import 'package:wakelock_plus_platform_interface/wakelock_plus_platform_interface.dart';
 
 const _phase = int.fromEnvironment('HV_PHASE', defaultValue: 1);
 const _repo = 'https://kodjodevf.github.io/mangayomi-extensions/index.json';
@@ -105,10 +108,23 @@ Future<T?> _try<T>(String what, Future<T> Function() call,
   }
 }
 
+/// Keeps the screen awake by doing nothing: the Linux plugin talks to the
+/// desktop session over D-Bus, which a headless CI runner doesn't have, and
+/// the reader turns it on without awaiting it (fine in the app, whose zone
+/// catches the error; a test fails on it).
+class _NoWakelock extends WakelockPlusPlatformInterface {
+  @override
+  Future<void> toggle({required bool enable}) async {}
+
+  @override
+  Future<bool> get enabled async => false;
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('HV extension flow, phase $_phase', (tester) async {
+    wakelockPlusPlatformInstance = _NoWakelock();
     app.main(const []);
     // The app installs its own FlutterError handler; wrap it to count errors
     // instead of failing on the first one.
