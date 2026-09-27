@@ -66,7 +66,8 @@ keep it that way.
   pushes to `claude/**`. A manual run can also build a debug APK, and run the app on Linux
   (`runtime_tests`): `integration_test/hv/extension_flow_test.dart` drives the extension path end
   to end and uploads logs (`HVRESULT` lines) and screenshots. It needs live third-party sites, so
-  it never gates a PR.
+  it never gates a PR. `integration_test` is added by that job, not in `pubspec.yaml`: as a dev
+  dependency its Android test libraries make R8 fail debug APK builds.
 - `.github/workflows/build.yml` — upstream release builds, on tags only.
 
 ## Branches

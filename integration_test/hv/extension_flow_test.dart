@@ -10,6 +10,10 @@
 //     --dart-define=HV_PHASE=2
 // On Linux, run it under xvfb-run. Screenshots (Linux, ImageMagick) go to
 // HV_SHOTS when it's set.
+//
+// integration_test is deliberately not in pubspec.yaml (as a dev dependency
+// its Android test libraries break R8 in debug APK builds). Add it for the
+// run only: flutter pub add 'dev:integration_test:{"sdk":"flutter"}'
 import 'dart:async';
 import 'dart:io';
 
@@ -36,9 +40,16 @@ import 'package:integration_test/integration_test.dart';
 const _phase = int.fromEnvironment('HV_PHASE', defaultValue: 1);
 const _repo = 'https://kodjodevf.github.io/mangayomi-extensions/index.json';
 
-/// Sources to try: one Dart (dart_eval) and one JavaScript (QuickJS)
-/// Mangayomi source.
-const _sources = ['MangaRead.org', 'MangaDex'];
+/// Sources to try, Dart (dart_eval) and JavaScript (QuickJS) ones. Each
+/// result line says how far a source got; the library, update and reader
+/// steps use the first one that got all the way to a chapter's pages.
+const _sources = [
+  'MangaRead.org', // Dart, Madara
+  'MangaDex', // JavaScript, API
+  'Mangapill', // JavaScript
+  'Weeb Central', // JavaScript
+  'Comick', // JavaScript, API
+];
 const _query = 'one piece';
 
 final _errors = <String>[];
@@ -166,13 +177,27 @@ void main() {
       }
       final pages = await _try('$name search "$_query"',
           () => installed.methods.search(_query, 1, []));
-      final first = pages?.list.firstWhereOrNull((e) => e.url != null);
-      _log('$name results: ${pages?.list.length ?? 0}'
-          '${first != null ? ' first: ${first.title}' : ''}');
-      if (first == null) continue;
-      final detail = await _try('$name details',
-          () => installed.methods.getDetail(DMedia.withUrl(first.url!)));
-      final chapters = detail?.episodes ?? const <DEpisode>[];
+      final results = [...?pages?.list.where((e) => e.url != null)];
+      _log('$name results: ${results.length}'
+          '${results.isNotEmpty ? ' first: ${results.first.title}' : ''}');
+      if (results.isEmpty) continue;
+      // The first hit can be an odd entry; try up to three.
+      DMedia? first;
+      var chapters = const <DEpisode>[];
+      for (final candidate in results.take(3)) {
+        final detail = await _try('$name details "${candidate.title}"',
+            () => installed.methods.getDetail(DMedia.withUrl(candidate.url!)));
+        final found = detail?.episodes ?? const <DEpisode>[];
+        if (found.isNotEmpty) {
+          first = candidate;
+          chapters = found;
+          break;
+        }
+      }
+      if (first == null) {
+        _log('$name chapters: 0');
+        continue;
+      }
       _log('$name chapters: ${chapters.length}');
       if (chapters.isEmpty) continue;
       final pageList = await _try(
