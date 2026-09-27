@@ -21,6 +21,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../main.dart';
+import 'package:anymex/hv/backup/secret_keys.dart'; // HV
 
 class BackupRestoreService extends GetxController {
   final OfflineStorageController _storageController = Get.find();
@@ -87,7 +88,7 @@ class BackupRestoreService extends GetxController {
           .where()
           .findAllSync()
           .where((e) {
-            final isAuth = e.key.startsWith('AuthKeys_') ?? false;
+            final isAuth = hvIsSecretSettingKey(e.key); // HV: real key names
             if (isAuth) return backupAuthTokens;
             return backupSettings;
           })
@@ -184,7 +185,7 @@ class BackupRestoreService extends GetxController {
         final key = setting['key'] as String?;
         if (key == null) continue;
 
-        final isAuth = key.startsWith('AuthKeys_');
+        final isAuth = hvIsSecretSettingKey(key); // HV: real key names
         if (isAuth && !restoreAuthTokens) continue;
         if (!isAuth && !restoreSettings) continue;
 
