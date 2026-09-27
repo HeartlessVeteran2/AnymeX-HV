@@ -73,6 +73,7 @@ import 'package:isar_community/isar.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:anymex/hv/hv_bootstrap.dart'; // HV
 
 WebViewEnvironment? webViewEnvironment;
 late Isar isar;
@@ -280,6 +281,7 @@ void _initializeGetxController() async {
     Get.put(GistSyncController(), permanent: true);
     Get.put(DownloadController(), permanent: true);
     Get.put(StatsTracker());
+    HvBootstrap.registerControllers(); // HV
     Get.lazyPut(() => CacheController());
     Get.lazyPut(() => MediaModeController());
     Get.lazyPut(() => DownloadSearchController());

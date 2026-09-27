@@ -11,6 +11,7 @@ import 'package:anymex/controllers/services/anilist/anilist_data.dart';
 import 'package:anymex/controllers/services/jikan.dart';
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/controllers/source/source_mapper.dart';
+import 'package:anymex/hv/source_link/details_hooks.dart'; // HV
 import 'package:anymex/database/comments/model/comment.dart';
 import 'package:anymex/database/data_keys/keys.dart';
 import 'package:anymex/database/isar_models/chapter.dart';
@@ -491,7 +492,10 @@ class MediaDetailsController extends GetxController {
         '${source.id}-${media.value.id}-${media.value.serviceType.index}';
     final savedTitle = DynamicKeys.mappedMediaTitle.get<String?>(key, null);
 
-    final mappedData = await SourceMapper.mapMedia(
+    // HV: reuse the saved source link instead of searching again
+    final hvSaved = HvDetailsHooks.savedMapping(media.value, source,
+        initialSource: initialSource);
+    final mappedData = hvSaved ?? await SourceMapper.mapMedia(
       _formatTitles(media.value),
       searchedTitle,
       mediaId: media.value.id.toString(),
@@ -544,9 +548,20 @@ class MediaDetailsController extends GetxController {
           isLoading.value = false;
           _isInitialFetchDone = true;
         }
+        // HV: remember the match; note new chapters for library titles
+        unawaited(HvDetailsHooks.onDetailFetched(
+            media: media.value, source: source, mapped: mappedData,
+            chapters: isAnime ? null : chapterList.toList(),
+            userConfirmed: false));
         CommentPreloader.to.preloadComments(media.value);
       } catch (e) {
         if (_isStaleSourceRequest(reqId)) return;
+        // HV: a saved link that stopped working is dropped; search again
+        if (hvSaved != null) {
+          await HvDetailsHooks.forgetMapping(media.value);
+          if (_isStaleSourceRequest(reqId)) return;
+          return _fetchContentFromSource();
+        }
         Logger.e('Failed to fetch details from mapped media: $e');
         episodeError.value = true;
         isLoading.value = false;
@@ -611,6 +626,11 @@ class MediaDetailsController extends GetxController {
       final mappingKey =
           '${source.id}-${media.value.id}-${media.value.serviceType.index}';
       DynamicKeys.mappedMediaTitle.set(mappingKey, mappedMedia.title);
+      // HV: the user picked this entry themselves
+      unawaited(HvDetailsHooks.onDetailFetched(
+          media: media.value, source: source, mapped: mappedMedia,
+          chapters: isAnime ? null : chapterList.toList(),
+          userConfirmed: true));
     } catch (e) {
       if (_isStaleSourceRequest(reqId)) return;
       Logger.e('Failed to fetch source details from mapped media: $e');

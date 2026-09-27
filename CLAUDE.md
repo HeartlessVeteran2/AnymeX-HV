@@ -34,7 +34,7 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
 scripts/hv/setup_env.sh                       # install Flutter 3.41.6, stub .env, pub get
 flutter analyze --no-fatal-infos --no-fatal-warnings lib test
 flutter test
-dart run build_runner build --delete-conflicting-outputs   # after changing an Isar model
+scripts/hv/codegen.sh                         # after changing an Isar model in lib/hv
 ```
 
 `.env` is required as an asset but is gitignored; `setup_env.sh` writes the stub from

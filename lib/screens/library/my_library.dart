@@ -29,6 +29,7 @@ import 'package:anymex/widgets/header/header.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:flutter/services.dart';
 import 'package:anymex/controllers/media_mode_controller.dart';
+import 'package:anymex/hv/library_update/ui/library_updates_button.dart'; // HV
 
 class MyLibrary extends StatefulWidget {
   final ItemType? type;
@@ -123,6 +124,8 @@ class _MyLibraryState extends State<MyLibrary>
                     hintText: 'Search in Library...',
                   ),
                   actions: [
+                    const HvLibraryUpdatesButton(), // HV
+                    2.width(),
                     HeaderActionButton(
                       icon: IconlyLight.search,
                       onTap: controller.toggleSearch,
