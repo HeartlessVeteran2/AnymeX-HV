@@ -32,6 +32,7 @@ import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:anymex/hv/chapters/chapter_list_hooks.dart'; // HV
 
 typedef _BatchOption = ({
   String title,
@@ -315,11 +316,18 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
       final isDownloadedTab = selectedViewTab.value == 1;
 
       final scanIndex = selectedScanlatorIndex.value;
-      final filtered = (scanIndex == 0 || scanlatorsList.isEmpty)
+      // HV: read/downloaded filters and newest-first order
+      final filtered = HvChapterListHooks.apply(
+          widget.anilistData,
+          (scanIndex == 0 || scanlatorsList.isEmpty)
           ? widget.chapterList
           : widget.chapterList
               .where((c) => c.scanlator == scanlatorsList[scanIndex - 1])
-              .toList();
+              .toList(),
+          saved: _savedMedia,
+          onlineProgress: _isLoggedInOnline ? _onlineProgress : null,
+          downloadedNumbers:
+              downloadedChapters.map((c) => c.chapter.number).toSet());
 
       final chunkSize = calculateChapterChunkSize(filtered);
       final chunks = chunkChapter(filtered, chunkSize);
@@ -400,6 +408,10 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      HvChapterFilterButton( // HV: filters, order, mark all
+                          media: widget.anilistData,
+                          chapters: widget.chapterList),
                       if (widget.onSettingsTap != null) ...[
                         const SizedBox(width: 8),
                         Material(
@@ -576,7 +588,14 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
               itemCount: currentChapters.length,
               itemBuilder: (context, index) {
                 final chapter = currentChapters[index];
-                return _buildTile(
+                return HvChapterListHooks.wrap( // HV: long-press actions
+                  context: context,
+                  media: widget.anilistData,
+                  chapter: chapter,
+                  allChapters: widget.chapterList,
+                  onlineProgress: _isLoggedInOnline ? _onlineProgress : null,
+                  onDownload: () => _startMangaDownload(context, [chapter]),
+                  child: _buildTile(
                   context,
                   chapter,
                   settings,
@@ -587,7 +606,7 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
                     mediaTitle,
                     isGrid: true,
                   ),
-                );
+                ));
               },
             )
           else
@@ -595,7 +614,14 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
               itemCount: currentChapters.length,
               itemBuilder: (context, index) {
                 final chapter = currentChapters[index];
-                return _buildTile(
+                return HvChapterListHooks.wrap( // HV: long-press actions
+                  context: context,
+                  media: widget.anilistData,
+                  chapter: chapter,
+                  allChapters: widget.chapterList,
+                  onlineProgress: _isLoggedInOnline ? _onlineProgress : null,
+                  onDownload: () => _startMangaDownload(context, [chapter]),
+                  child: _buildTile(
                   context,
                   chapter,
                   settings,
@@ -605,7 +631,7 @@ class _ChapterListBuilderState extends State<ChapterListBuilder> {
                     extName,
                     mediaTitle,
                   ),
-                );
+                ));
               },
             ),
         ],
