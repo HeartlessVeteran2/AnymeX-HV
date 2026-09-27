@@ -4,6 +4,11 @@ import 'dart:math' as math;
 import 'package:anymex/controllers/services/storage/anymex_cache_manager.dart';
 import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/bookmarks/bookmark_repository.dart';
+import 'package:anymex/hv/bookmarks/models/hv_page_bookmark.dart';
+import 'package:anymex/hv/bookmarks/reader_bookmarks.dart';
+import 'package:anymex/hv/bookmarks/ui/bookmarks_screen.dart';
+import 'package:anymex/hv/bookmarks/ui/notes_sheet.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/reader/core/gallery_model.dart';
 import 'package:anymex/hv/reader/reader_hooks.dart';
@@ -50,6 +55,9 @@ class _HvPageGalleryScreenState extends State<HvPageGalleryScreen> {
   late final int _currentSpread;
   late int _columns;
   final ScrollController _scroll = ScrollController();
+  late final Stream<List<HvPageBookmark>> _bookmarks =
+      BookmarkRepository.watchForMedia(
+          HvReaderBookmarks.mediaKey(widget.controller));
   bool _scrolled = false;
 
   @override
@@ -74,8 +82,7 @@ class _HvPageGalleryScreenState extends State<HvPageGalleryScreen> {
     super.dispose();
   }
 
-  int get _pageCount =>
-      _sections.fold(0, (sum, s) => sum + s.items.length);
+  int get _pageCount => _sections.fold(0, (sum, s) => sum + s.items.length);
 
   void _setColumns(int value) {
     HvKeys.hvGalleryColumns.set(value);
@@ -104,7 +111,8 @@ class _HvPageGalleryScreenState extends State<HvPageGalleryScreen> {
 
   String _chapterLabel(Chapter? chapter) {
     if (chapter == null) return 'Chapter';
-    final number = chapter.number != null ? 'Chapter ${chapter.formattedNumber}' : null;
+    final number =
+        chapter.number != null ? 'Chapter ${chapter.formattedNumber}' : null;
     final title = (chapter.title ?? '').trim();
     if (number == null) return title.isEmpty ? 'Chapter' : title;
     return title.isEmpty || title == number ? number : '$number · $title';
@@ -117,6 +125,27 @@ class _HvPageGalleryScreenState extends State<HvPageGalleryScreen> {
       appBar: AppBar(
         title: Text('$_pageCount pages'),
         actions: [
+          IconButton(
+            tooltip: 'Notes',
+            icon: const Icon(Icons.sticky_note_2_outlined),
+            onPressed: () => showHvNotesSheet(
+              context,
+              mediaKey: HvReaderBookmarks.mediaKey(widget.controller),
+              chapterKey: HvReaderBookmarks.chapterKey(
+                  widget.controller.currentChapter.value),
+              chapter: widget.controller.currentChapter.value,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Bookmarks',
+            icon: const Icon(Icons.bookmarks_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => HvBookmarksScreen(
+                mediaKey: HvReaderBookmarks.mediaKey(widget.controller),
+                title: widget.controller.media.title,
+              ),
+            )),
+          ),
           for (final n in const [2, 3, 4])
             Padding(
               padding: const EdgeInsets.only(right: 6),
@@ -130,59 +159,78 @@ class _HvPageGalleryScreenState extends State<HvPageGalleryScreen> {
           const SizedBox(width: 6),
         ],
       ),
-      body: LayoutBuilder(builder: (context, constraints) {
-        _scrollToCurrent(constraints.maxWidth);
-        return CustomScrollView(
-          controller: _scroll,
-          slivers: [
-            for (final section in _sections) ...[
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: _headerExtent,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '${_chapterLabel(section.chapter)} · ${section.items.length}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(color: colors.primary),
+      body: StreamBuilder<List<HvPageBookmark>>(
+        stream: _bookmarks,
+        builder: (context, snapshot) {
+          final bookmarked = {
+            for (final b in snapshot.data ?? const <HvPageBookmark>[])
+              b.bookmarkKey,
+          };
+          final mediaKey = HvReaderBookmarks.mediaKey(widget.controller);
+          return LayoutBuilder(builder: (context, constraints) {
+            _scrollToCurrent(constraints.maxWidth);
+            return CustomScrollView(
+              controller: _scroll,
+              slivers: [
+                for (final section in _sections) ...[
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: _headerExtent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${_chapterLabel(section.chapter)} · ${section.items.length}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(color: colors.primary),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: _padding),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _columns,
-                    mainAxisSpacing: _spacing,
-                    crossAxisSpacing: _spacing,
-                    childAspectRatio: _aspect,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: _padding),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _columns,
+                        mainAxisSpacing: _spacing,
+                        crossAxisSpacing: _spacing,
+                        childAspectRatio: _aspect,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final item = section.items[i];
+                          final chapterKey =
+                              HvReaderBookmarks.chapterKey(section.chapter);
+                          return _Thumbnail(
+                            item: item,
+                            current: item.spreadIndex == _currentSpread,
+                            bookmarked: bookmarked.contains(hvBookmarkKey(
+                                mediaKey, chapterKey, item.pageNumber)),
+                            onTap: () =>
+                                Navigator.pop(context, item.spreadIndex),
+                            onLongPress: () => HvReaderBookmarks.toggle(
+                                widget.controller,
+                                chapter: section.chapter,
+                                pageNumber: item.pageNumber),
+                          );
+                        },
+                        childCount: section.items.length,
+                      ),
+                    ),
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) {
-                      final item = section.items[i];
-                      return _Thumbnail(
-                        item: item,
-                        current: item.spreadIndex == _currentSpread,
-                        onTap: () => Navigator.pop(context, item.spreadIndex),
-                      );
-                    },
-                    childCount: section.items.length,
-                  ),
-                ),
-              ),
-            ],
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
-        );
-      }),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            );
+          });
+        },
+      ),
     );
   }
 }
@@ -191,18 +239,23 @@ class _Thumbnail extends StatelessWidget {
   const _Thumbnail({
     required this.item,
     required this.current,
+    required this.bookmarked,
     required this.onTap,
+    required this.onLongPress,
   });
 
   final GalleryItem<PageUrl> item;
   final bool current;
+  final bool bookmarked;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Stack(
@@ -220,7 +273,9 @@ class _Thumbnail extends StatelessWidget {
                     ? colors.primary
                     : Colors.black.withValues(alpha: 0.55),
                 child: Text(
-                  current ? '${item.pageNumber} · Current' : '${item.pageNumber}',
+                  current
+                      ? '${item.pageNumber} · Current'
+                      : '${item.pageNumber}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11,
@@ -229,6 +284,13 @@ class _Thumbnail extends StatelessWidget {
                 ),
               ),
             ),
+            if (bookmarked)
+              Positioned(
+                top: 0,
+                right: 6,
+                child: Icon(Icons.bookmark_rounded,
+                    color: colors.primary, size: 26),
+              ),
             if (current)
               Positioned.fill(
                 child: IgnorePointer(

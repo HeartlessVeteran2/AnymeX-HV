@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
 import 'package:anymex/hv/reader/ui/page_gallery_screen.dart'; // HV
+import 'package:anymex/hv/reader/ui/reader_top_buttons.dart'; // HV
 
 class IOSReaderControlTheme extends ReaderControlTheme {
   @override
@@ -79,6 +80,22 @@ class _LiquidTopBar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ChapterPill(controller: controller),
+                ),
+                const SizedBox(width: 10),
+                // HV: bookmark this page
+                HvBookmarkPageButton(
+                  controller: controller,
+                  builder: (bookmarked, toggle) => _LiquidBubble(
+                    size: 44,
+                    onTap: toggle,
+                    child: Icon(
+                      bookmarked
+                          ? CupertinoIcons.bookmark_fill
+                          : CupertinoIcons.bookmark,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 // HV: page gallery

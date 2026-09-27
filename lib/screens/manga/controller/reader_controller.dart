@@ -29,6 +29,7 @@ import 'package:vibration/vibration.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../models/reader/tap_zones.dart';
 import '../../../repositories/tap_zone_repository.dart';
+import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
 import 'package:anymex/hv/reader/series_settings.dart'; // HV
 
 enum LoadingState { loading, loaded, error }
@@ -1441,7 +1442,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     _initializeControllers();
     _getPreferences();
     _applyAutoWebtoonMode();
-    HvSeriesSettings.attach(this); // HV: per-series reader settings
+    HvReaderHooks.attach(this); // HV: per-series settings, bookmark jumps
 
     ever(currentPageIndex, (indexVal) {
       preloadNextPages(indexVal - 1);

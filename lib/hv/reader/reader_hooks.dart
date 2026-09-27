@@ -1,8 +1,44 @@
+import 'package:anymex/hv/reader/series_settings.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
+import 'package:get/get.dart';
 
 /// Hooks and helpers for the manga reader (`ReaderController`).
 class HvReaderHooks {
   HvReaderHooks._();
+
+  /// A page to open once its chapter's pages have loaded (set before
+  /// opening the reader from a bookmark).
+  static ({String chapterKey, int pageNumber, int at})? _pendingJump;
+
+  static void openAtPage(String chapterKey, int pageNumber) => _pendingJump = (
+        chapterKey: chapterKey,
+        pageNumber: pageNumber,
+        at: DateTime.now().millisecondsSinceEpoch,
+      );
+
+  /// Called from `ReaderController.init` after it loaded its settings.
+  static void attach(ReaderController c) {
+    HvSeriesSettings.attach(c);
+    ever<LoadingState>(c.loadingState, (state) {
+      final jump = _pendingJump;
+      if (state != LoadingState.loaded || jump == null) return;
+      // A jump that didn't happen within a minute (reader failed to open,
+      // different chapter) is dropped.
+      if (DateTime.now().millisecondsSinceEpoch - jump.at > 60000) {
+        _pendingJump = null;
+        return;
+      }
+      final chapter = c.currentChapter.value;
+      final key = (chapter?.link ?? '').isNotEmpty
+          ? chapter!.link!
+          : (chapter?.localPath ?? '');
+      if (key != jump.chapterKey) return;
+      _pendingJump = null;
+      // After the reader's own "resume at saved page" jump.
+      Future.delayed(const Duration(milliseconds: 400),
+          () => c.navigateToPage(jump.pageNumber - 1));
+    });
+  }
 
   /// Shows [spreadIndex] in either reading mode. The reader's own page
   /// listeners then update the current chapter and page.
