@@ -1,6 +1,7 @@
 import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/hv/common/media_key.dart';
 import 'package:anymex/hv/library_update/core/chapter_diff.dart';
+import 'package:anymex/hv/library_update/core/unread.dart';
 import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
 import 'package:anymex/hv/library_update/update_repository.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
@@ -10,7 +11,8 @@ class ChapterRecord {
   final ChapterDiff diff;
 
   /// The updates written for this check (empty unless new chapters were
-  /// reported).
+  /// reported). Chapters already recorded, e.g. by the details page, aren't
+  /// included.
   final List<HvChapterUpdate> updates;
 
   const ChapterRecord(this.diff, this.updates);
@@ -40,9 +42,12 @@ class ChapterRecorder {
     if (diff.kind != ChapterDiffKind.empty) {
       link.knownChapterKeys = diff.knownAfter;
       link.lastCheckedAt = now;
+      link.latestChapterNumber =
+          hvLatestNumber(chapters.map((c) => c.number)) ??
+              link.latestChapterNumber;
     }
 
-    final updates = <HvChapterUpdate>[];
+    var updates = <HvChapterUpdate>[];
     if (reportNew &&
         diff.kind == ChapterDiffKind.changes &&
         diff.newIndexes.isNotEmpty) {
@@ -65,8 +70,8 @@ class ChapterRecorder {
           ..releaseDate = chapter.releaseDate
           ..foundAt = now);
       }
-      await UpdateRepository.addUpdates(updates);
-      link.lastNewChapterAt = now;
+      updates = await UpdateRepository.addUpdates(updates);
+      if (updates.isNotEmpty) link.lastNewChapterAt = now;
     }
     return ChapterRecord(diff, updates);
   }

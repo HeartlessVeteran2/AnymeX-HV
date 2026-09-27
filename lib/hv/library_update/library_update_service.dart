@@ -7,13 +7,14 @@ import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/common/media_key.dart';
 import 'package:anymex/hv/common/network_conditions.dart';
-import 'package:anymex/hv/common/read_state.dart';
 import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/library_update/auto_download.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
 import 'package:anymex/hv/library_update/core/chapter_diff.dart';
 import 'package:anymex/hv/library_update/core/source_health.dart';
 import 'package:anymex/hv/library_update/core/update_filter.dart';
+import 'package:anymex/hv/library_update/core/unread.dart';
+import 'package:anymex/hv/library_update/progress.dart';
 import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
 import 'package:anymex/hv/library_update/models/hv_update_error.dart';
 import 'package:anymex/hv/library_update/update_repository.dart';
@@ -151,13 +152,16 @@ class LibraryUpdateService extends GetxService {
     bool automatic = false,
   }) async {
     if (running.value) return null;
+    // Claimed before the Wi-Fi check awaits, so a manual refresh started in
+    // that moment can't run alongside.
+    running.value = true;
     if (automatic &&
         LibraryUpdateSettings.wifiOnly &&
         !await HvNetworkConditions.isUnmetered()) {
       Logger.i('HV: automatic library update skipped (not on Wi-Fi)');
+      running.value = false;
       return null;
     }
-    running.value = true;
     _cancelled = false;
     done.value = 0;
     total.value = 0;
@@ -229,7 +233,11 @@ class LibraryUpdateService extends GetxService {
         finishedAt: DateTime.now(),
       );
       lastResult.value = result;
-      HvKeys.hvLastUpdateRunAt.set(result.finishedAt.millisecondsSinceEpoch);
+      // Only a run over the whole library counts toward the auto-update
+      // interval; retrying one title or checking a selection doesn't.
+      if (types == null && onlyMediaKeys == null) {
+        HvKeys.hvLastUpdateRunAt.set(result.finishedAt.millisecondsSinceEpoch);
+      }
       current.value = '';
       running.value = false;
     }
@@ -272,12 +280,14 @@ class LibraryUpdateService extends GetxService {
       if (media == null) continue;
       final link = SourceLinkRepository.get(type.index, id);
       if (onlyMediaKeys == null) {
+        final progress = HvProgress.of(media, type);
         final reason = updateSkipReason(
           UpdateCandidate(
             lists: listsById[id]!,
-            unreadCount: _unreadCount(media, link),
+            unreadCount: hvUnreadEstimate(
+                link?.latestChapterNumber, progress.finishedNumbers),
             status: media.status,
-            started: (media.readChapters ?? const []).isNotEmpty,
+            started: progress.started,
           ),
           filter,
         );
@@ -311,17 +321,6 @@ class LibraryUpdateService extends GetxService {
     return (jobs: jobs, skipped: skipped, unavailable: unavailable);
   }
 
-  /// Chapters seen on the source minus chapters read, or null when the
-  /// title hasn't been checked yet.
-  static int? _unreadCount(OfflineMedia media, HvSourceLink? link) {
-    final known = link?.knownChapterKeys.length ?? 0;
-    if (known == 0) return null;
-    final read = (media.readChapters ?? const [])
-        .where((c) => hvIsPageComplete(c.pageNumber, c.totalPages))
-        .length;
-    return known > read ? known - read : 0;
-  }
-
   /// The source an unlinked title was last used with: the one remembered for
   /// it on the details page, else the one its last read chapter came from.
   Source? _guessSource(
@@ -353,6 +352,10 @@ class LibraryUpdateService extends GetxService {
       return null;
     }
     try {
+      // The details page may have re-linked the title or recorded chapters
+      // since this run started; check against the saved link as it is now.
+      final saved = SourceLinkRepository.get(job.type.index, job.mediaId);
+      if (saved != null && saved.isTrusted) job.link = saved;
       job.link ??= await _autoLink(job);
       final link = job.link;
       if (link == null) {
