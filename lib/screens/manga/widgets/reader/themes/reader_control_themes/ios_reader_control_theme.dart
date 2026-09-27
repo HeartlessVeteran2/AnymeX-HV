@@ -12,6 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
+import 'package:anymex/hv/reader/ui/page_gallery_screen.dart'; // HV
 
 class IOSReaderControlTheme extends ReaderControlTheme {
   @override
@@ -78,6 +79,17 @@ class _LiquidTopBar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _ChapterPill(controller: controller),
+                ),
+                const SizedBox(width: 10),
+                // HV: page gallery
+                _LiquidBubble(
+                  size: 44,
+                  onTap: () => HvPageGallery.open(context, controller),
+                  child: const Icon(
+                    CupertinoIcons.square_grid_2x2,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 _LiquidBubble(

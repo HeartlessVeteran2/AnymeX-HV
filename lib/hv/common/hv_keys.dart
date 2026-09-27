@@ -36,4 +36,8 @@ enum HvKeys {
   /// Hidden lists (`"<typeIndex>|<list name>"`).
   hvHiddenLists,
   hvShowHiddenLists,
+
+  // Reader
+  /// Columns in the reader's page gallery (2–4).
+  hvGalleryColumns,
 }
