@@ -13,6 +13,7 @@ import 'package:anymex_extension_runtime_bridge/Models/Source.dart';
 import 'package:anymex/controllers/stats/stats_tracker.dart';
 import 'package:get/get.dart';
 import 'package:isar_community/isar.dart';
+import 'package:anymex/hv/library/library_hooks.dart'; // HV
 
 enum MediaLibraryType {
   anime,
@@ -477,6 +478,7 @@ class OfflineStorageController extends GetxController {
     });
 
     Logger.i('Renamed list: $oldName -> $newName');
+    HvLibraryHooks.onListRenamed(mediaType, oldName, newName); // HV
   }
 
   Future<void> addMediaToList(String listName, String mediaId,

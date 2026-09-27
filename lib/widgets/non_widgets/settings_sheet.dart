@@ -22,6 +22,9 @@ import 'package:get/get.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:anymex/hv/library_update/ui/updates_screen.dart'; // HV
+import 'package:anymex/hv/bookmarks/ui/bookmarks_screen.dart'; // HV
+import 'package:anymex/hv/discovery/ui/discover_screen.dart'; // HV
 
 class SettingsSheet extends StatelessWidget {
   SettingsSheet({super.key});
@@ -388,6 +391,33 @@ class SettingsSheet extends StatelessWidget {
         onTap: () {
           Get.back();
           navigate(() => const DownloadScreen());
+        },
+      ),
+      // HV: library updates (new chapters)
+      _SheetMenuItem(
+        icon: Icons.new_releases_outlined,
+        label: 'Updates',
+        onTap: () {
+          Get.back();
+          navigate(() => const HvUpdatesScreen());
+        },
+      ),
+      // HV: page bookmarks
+      _SheetMenuItem(
+        icon: Icons.bookmarks_outlined,
+        label: 'Bookmarks',
+        onTap: () {
+          Get.back();
+          navigate(() => const HvBookmarksScreen());
+        },
+      ),
+      // HV: feed and library-wide recommendations
+      _SheetMenuItem(
+        icon: Icons.explore_outlined,
+        label: 'Discover',
+        onTap: () {
+          Get.back();
+          navigate(() => const HvDiscoverScreen());
         },
       ),
       _SheetMenuItem(

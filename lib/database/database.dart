@@ -5,6 +5,7 @@ import 'package:anymex/database/isar_models/key_value.dart';
 import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/database/isar_models/daily_activity.dart';
 import 'package:anymex/database/isar_models/media_stats.dart';
+import 'package:anymex/hv/hv_bootstrap.dart'; // HV
 import 'package:anymex/utils/logger.dart';
 import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart'
     hide isar;
@@ -31,7 +32,9 @@ class Database {
         OfflineMediaSchema,
         CustomListSchema,
         DailyActivitySchema,
-        MediaStatsSchema
+        MediaStatsSchema,
+        // HV: collections for the HV features (lib/hv)
+        ...HvBootstrap.isarSchemas,
       ],
       directory: dir.path,
       name: 'AnymeX',

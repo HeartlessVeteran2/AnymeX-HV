@@ -1,0 +1,7 @@
+# HV: same rules as the rest of the app; generated Isar code is not analyzed
+# (its unique-index accessors use Isar APIs marked experimental).
+include: ../../analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"

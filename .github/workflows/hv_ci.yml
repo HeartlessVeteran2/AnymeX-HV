@@ -1,0 +1,87 @@
+name: HV CI
+
+# Lightweight checks for the HV developer branch: static analysis of the app
+# code and the unit tests. Release builds still live in build.yml.
+on:
+  pull_request:
+  push:
+    branches:
+      - "claude/**"
+  workflow_dispatch:
+    inputs:
+      build_apk:
+        description: "Also build a debug APK"
+        type: boolean
+        default: false
+
+env:
+  FLUTTER_VERSION: "3.41.6"
+
+# Manual (APK) runs get their own group so a push doesn't cancel them.
+concurrency:
+  group: hv-ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Stub .env
+        run: |
+          cat > .env <<'ENV'
+          AL_CLIENT_ID=0
+          AL_CLIENT_SECRET=0
+          SIMKL_CLIENT_ID=0
+          SIMKL_CLIENT_SECRET=0
+          MAL_CLIENT_ID=0
+          MAL_CLIENT_SECRET=0
+          CALLBACK_SCHEME=anymex://callback
+          COMMENTS_BASE_URL=https://whzwmfxngelicmjyxwmr.supabase.co/functions/v1
+          ENV
+
+      - run: flutter pub get
+
+      # Only errors fail the job; the upstream code base carries warnings/infos.
+      # packages/ is excluded: the vendored rhttp tests need mocktail.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings lib test
+
+      - name: Test
+        run: flutter test
+
+  build-apk:
+    if: github.event_name == 'workflow_dispatch' && inputs.build_apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "adopt"
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Stub .env
+        run: |
+          printf 'AL_CLIENT_ID=0\nAL_CLIENT_SECRET=0\nSIMKL_CLIENT_ID=0\nSIMKL_CLIENT_SECRET=0\nMAL_CLIENT_ID=0\nMAL_CLIENT_SECRET=0\nCALLBACK_SCHEME=anymex://callback\nCOMMENTS_BASE_URL=https://whzwmfxngelicmjyxwmr.supabase.co/functions/v1\n' > .env
+      - run: flutter pub get
+      # Debug builds carry the debug engine for every ABI and Jetifier runs
+      # out of the default 4G heap on them; arm64 only, with more heap on
+      # the CI runner (the committed gradle.properties is unchanged).
+      - name: Build debug APK (arm64)
+        run: |
+          sed -i 's/-Xmx4G/-Xmx6G/' android/gradle.properties
+          flutter build apk --debug --target-platform android-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anymex-hv-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk

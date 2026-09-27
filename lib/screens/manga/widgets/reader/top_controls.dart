@@ -10,6 +10,7 @@ import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:get/get.dart';
+import 'package:anymex/hv/reader/ui/reader_top_buttons.dart'; // HV
 
 class ReaderTopControls extends StatelessWidget {
   final ReaderController controller;
@@ -54,6 +55,7 @@ class ReaderTopControls extends StatelessWidget {
                   const SizedBox(width: 6),
                   _buildChapterInfo(context),
                   const SizedBox(width: 6),
+                  HvReaderTopActions(controller: controller), // HV
                   _buildSettingsButton(context),
                 ],
               ),

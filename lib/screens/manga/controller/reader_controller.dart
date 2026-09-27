@@ -29,6 +29,8 @@ import 'package:vibration/vibration.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../models/reader/tap_zones.dart';
 import '../../../repositories/tap_zone_repository.dart';
+import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
+import 'package:anymex/hv/reader/series_settings.dart'; // HV
 
 enum LoadingState { loading, loaded, error }
 
@@ -225,12 +227,8 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
         newSpreads.add(ReaderPage(page1: page, chapter: current));
       }
     } else {
-      for (int i = 0; i < pageList.length; i += 2) {
-        final page1 = pageList[i];
-        final page2 = (i + 1 < pageList.length) ? pageList[i + 1] : null;
-        newSpreads
-            .add(ReaderPage(page1: page1, page2: page2, chapter: current));
-      }
+      // HV: cover alone / wide pages alone in dual page mode
+      newSpreads.addAll(HvReaderHooks.dualSpreads(this, pageList, current));
     }
 
     if (overscrollToChapter.value) {
@@ -330,12 +328,9 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
           newSpreads.add(ReaderPage(page1: page, chapter: nextChapterObj));
         }
       } else {
-        for (int i = 0; i < nextPages.length; i += 2) {
-          final page1 = nextPages[i];
-          final page2 = (i + 1 < nextPages.length) ? nextPages[i + 1] : null;
-          newSpreads.add(
-              ReaderPage(page1: page1, page2: page2, chapter: nextChapterObj));
-        }
+        // HV: cover alone / wide pages alone in dual page mode
+        newSpreads.addAll(
+            HvReaderHooks.dualSpreads(this, nextPages, nextChapterObj));
       }
 
       newSpreads.add(ReaderPage(
@@ -564,6 +559,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    HvReaderHooks.detach(this); // HV: delete-after-read on exit
 
     Future.microtask(() {
       _performFinalSave();
@@ -1033,6 +1029,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     ReaderKeys.displayRefreshInterval.set(displayRefreshInterval.value);
     ReaderKeys.displayRefreshColor.set(displayRefreshColor.value);
     ReaderKeys.imageFilterQuality.set(imageFilterQuality.value);
+    HvSeriesSettings.afterSave(this); // HV: keep series values out of globals
   }
 
   void _setupPositionListener() {
@@ -1439,6 +1436,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
     _initializeControllers();
     _getPreferences();
     _applyAutoWebtoonMode();
+    HvReaderHooks.attach(this); // HV: per-series settings, bookmark jumps
 
     ever(currentPageIndex, (indexVal) {
       preloadNextPages(indexVal - 1);
@@ -1803,6 +1801,9 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
   void chapterNavigator(bool next) async {
     final current = currentChapter.value;
     if (current == null) return;
+    // HV: show the transition page first when chapters are missing or
+    // "Always show chapter transition" is on
+    if (HvReaderHooks.interceptChapterNav(this, next)) return;
 
     _performSave(reason: "Saving before chapter is changed");
 

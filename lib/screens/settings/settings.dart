@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
+import 'package:anymex/hv/library_update/ui/update_settings_screen.dart'; // HV
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -228,6 +229,13 @@ class _SettingsPageState extends State<SettingsPage> {
               title: "Download Settings",
               description: "Configure parallel downloads and directory",
               destination: SettingsDownloads.new,
+            ),
+            // HV: library update checker settings
+            _buildTile(
+              icon: Icons.new_releases_outlined,
+              title: "Updates & Downloads",
+              description: "New chapters, auto-download, download ahead",
+              destination: HvUpdateSettingsScreen.new,
             ),
           ],
         ),
