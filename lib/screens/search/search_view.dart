@@ -2,6 +2,7 @@ import 'package:anymex/controllers/service_handler/params.dart';
 import 'package:anymex/controllers/service_handler/service_handler.dart';
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/database/data_keys/keys.dart';
+import 'package:anymex/hv/extensions/source_calls.dart'; // HV
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/screens/anime/details_page.dart';
 import 'package:anymex/screens/manga/details_page.dart';
@@ -392,8 +393,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     }
 
     try {
-      final res = await _selectedSource!.methods
-          .search(searchQuery, 1, _extensionActiveFilters);
+      final res = await hvWithTimeout( // HV: time limit
+          _selectedSource!.methods
+              .search(searchQuery, 1, _extensionActiveFilters),
+          action: 'Search',
+          limit: HvSourceTimeouts.browse);
       final rawList = res.list;
       if (!mounted) return;
 
@@ -427,7 +431,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   Future<void> _performPopularBrowse() async {
     try {
-      final pages = await _selectedSource!.methods.getPopular(1);
+      final pages = await hvWithTimeout( // HV: time limit
+          _selectedSource!.methods.getPopular(1),
+          action: 'Loading popular',
+          limit: HvSourceTimeouts.browse);
       if (!mounted) return;
       final mediaList = pages.list
           .map((e) =>
@@ -456,7 +463,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   Future<void> _performLatestBrowse() async {
     try {
-      final pages = await _selectedSource!.methods.getLatestUpdates(1);
+      final pages = await hvWithTimeout( // HV: time limit
+          _selectedSource!.methods.getLatestUpdates(1),
+          action: 'Loading latest',
+          limit: HvSourceTimeouts.browse);
       if (!mounted) return;
       final mediaList = pages.list
           .map((e) =>
@@ -548,11 +558,16 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
     final installed = effectiveType.extensions;
     final items = installed.map((s) {
-      final Future<List<dynamic>> future =
+      // HV: a failing or hung source shows its error on its row instead of
+      // "no results" or an endless spinner, and isn't cached for the session.
+      final Future<List<dynamic>> future = hvWithTimeout(
           s.methods.search(searchQuery, 1, []).then<List<dynamic>>((res) {
-        return res.list;
-      }).catchError((err) {
-        return <dynamic>[];
+            return res.list;
+          }),
+          action: 'Search',
+          limit: HvSourceTimeouts.perSourceSearch);
+      future.then<void>((_) {}, onError: (Object _) {
+        _allSourcesCache.remove(key);
       });
 
       return ExtensionSearchItem(source: s, future: future);
@@ -584,21 +599,29 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       List<Media> results = [];
       if (_selectedSource != null) {
         if (_extensionBrowseMode == _ExtensionBrowseMode.popular) {
-          final pages = await _selectedSource!.methods.getPopular(nextPage);
+          final pages = await hvWithTimeout( // HV: time limit
+              _selectedSource!.methods.getPopular(nextPage),
+              action: 'Loading more',
+              limit: HvSourceTimeouts.browse);
           results = pages.list
               .map((e) => Media.froDMedia(e, effectiveType)
                 ..sourceId = _selectedSource!.id)
               .toList();
         } else if (_extensionBrowseMode == _ExtensionBrowseMode.latest) {
-          final pages =
-              await _selectedSource!.methods.getLatestUpdates(nextPage);
+          final pages = await hvWithTimeout( // HV: time limit
+              _selectedSource!.methods.getLatestUpdates(nextPage),
+              action: 'Loading more',
+              limit: HvSourceTimeouts.browse);
           results = pages.list
               .map((e) => Media.froDMedia(e, effectiveType)
                 ..sourceId = _selectedSource!.id)
               .toList();
         } else {
-          final res = await _selectedSource!.methods
-              .search(_lastSearchQuery, nextPage, _extensionActiveFilters);
+          final res = await hvWithTimeout( // HV: time limit
+              _selectedSource!.methods
+                  .search(_lastSearchQuery, nextPage, _extensionActiveFilters),
+              action: 'Loading more',
+              limit: HvSourceTimeouts.browse);
           results = res.list
               .map((e) => Media.froDMedia(e, effectiveType)
                 ..sourceId = _selectedSource!.id)
