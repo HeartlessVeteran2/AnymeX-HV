@@ -8,9 +8,12 @@ import 'package:anymex/hv/library_update/core/update_grouping.dart';
 import 'package:anymex/hv/library_update/library_update_service.dart';
 import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
 import 'package:anymex/hv/library_update/models/hv_update_error.dart';
+import 'package:anymex/hv/library_update/ui/update_errors_screen.dart';
 import 'package:anymex/hv/library_update/ui/update_progress_banner.dart';
+import 'package:anymex/hv/library_update/ui/update_settings_screen.dart';
 import 'package:anymex/hv/library_update/update_repository.dart';
 import 'package:anymex/hv/reader/hv_reader_launcher.dart';
+import 'package:anymex/utils/function.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_image.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
 import 'package:anymex/widgets/non_widgets/snackbar.dart';
@@ -30,8 +33,7 @@ class HvUpdatesScreen extends StatelessWidget {
       result.newChapters == 0
           ? 'No new chapters'
           : '${result.newChapters} new chapter${result.newChapters == 1 ? '' : 's'}',
-      if (result.failed + result.skipped > 0)
-        '${result.failed + result.skipped} couldn\'t be checked',
+      if (result.failed > 0) '${result.failed} couldn\'t be checked',
     ];
     snackBar(parts.join(' · '));
   }
@@ -50,7 +52,8 @@ class HvUpdatesScreen extends StatelessWidget {
               if (errors.isEmpty) return const SizedBox.shrink();
               return IconButton(
                 tooltip: 'Update errors',
-                onPressed: () => _showErrors(context, errors),
+                onPressed: () =>
+                    navigate(() => const HvUpdateErrorsScreen()),
                 icon: Badge(
                   label: Text('${errors.length}'),
                   child: const Icon(Icons.error_outline_rounded),
@@ -68,10 +71,19 @@ class HvUpdatesScreen extends StatelessWidget {
               )),
           PopupMenuButton<String>(
             onSelected: (value) async {
-              if (value == 'clear') await UpdateRepository.dismissAll();
+              switch (value) {
+                case 'clear':
+                  await UpdateRepository.dismissAll();
+                case 'errors':
+                  navigate(() => const HvUpdateErrorsScreen());
+                case 'settings':
+                  navigate(() => const HvUpdateSettingsScreen());
+              }
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: 'clear', child: Text('Clear all')),
+              PopupMenuItem(value: 'errors', child: Text('Update errors')),
+              PopupMenuItem(value: 'settings', child: Text('Settings')),
             ],
           ),
         ],
@@ -116,54 +128,6 @@ class HvUpdatesScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showErrors(BuildContext context, List<HvUpdateError> errors) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        builder: (context, controller) => Column(
-          children: [
-            ListTile(
-              title: Text('${errors.length} titles couldn\'t be checked'),
-              trailing: TextButton(
-                onPressed: () async {
-                  await UpdateRepository.clearErrors(errors.map((e) => e.id));
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const Text('Clear'),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: controller,
-                itemCount: errors.length,
-                itemBuilder: (context, i) {
-                  final error = errors[i];
-                  return ListTile(
-                    leading: _Poster(error.poster, size: 40),
-                    title: Text(error.mediaTitle ?? error.mediaId,
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(
-                      [
-                        if (error.sourceName != null) error.sourceName!,
-                        error.message,
-                      ].join(' · '),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

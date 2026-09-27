@@ -3,6 +3,7 @@ import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/controllers/track/track_binding_controller.dart';
 import 'package:anymex/database/data_keys/keys.dart';
 import 'package:anymex/database/isar_models/chapter.dart';
+import 'package:anymex/hv/common/hv_navigation.dart';
 import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -31,6 +32,12 @@ class HvReaderLauncher {
     String? fallbackPoster,
   }) async {
     final type = ItemType.values[mediaTypeIndex];
+    if (type == ItemType.anime) {
+      // Episodes are played from the details page (server/quality choice).
+      final stored = LibraryMembership.media(mediaTypeIndex, mediaId);
+      if (stored != null) HvNavigation.openDetails(stored, type);
+      return;
+    }
     final link = SourceLinkRepository.get(mediaTypeIndex, mediaId);
     if (link == null) {
       snackBar('This title isn\'t linked to a source yet. Open it once first.');

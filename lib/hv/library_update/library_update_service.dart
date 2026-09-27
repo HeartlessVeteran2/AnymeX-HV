@@ -6,26 +6,42 @@ import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/common/media_key.dart';
+import 'package:anymex/hv/common/network_conditions.dart';
+import 'package:anymex/hv/common/read_state.dart';
 import 'package:anymex/hv/library/library_membership.dart';
+import 'package:anymex/hv/library_update/auto_download.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
 import 'package:anymex/hv/library_update/core/chapter_diff.dart';
 import 'package:anymex/hv/library_update/core/source_health.dart';
+import 'package:anymex/hv/library_update/core/update_filter.dart';
+import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
 import 'package:anymex/hv/library_update/models/hv_update_error.dart';
 import 'package:anymex/hv/library_update/update_repository.dart';
+import 'package:anymex/hv/library_update/update_settings.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
 import 'package:anymex/hv/matching/title_normalizer.dart';
+import 'package:anymex/hv/notifications/hv_notifications.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
+import 'package:anymex/database/isar_models/custom_list.dart';
+import 'package:anymex/main.dart' show isar;
 import 'package:anymex/utils/logger.dart';
-import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart';
+import 'package:anymex/widgets/non_widgets/snackbar.dart';
+import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart'
+    hide isar;
 import 'package:get/get.dart';
+import 'package:isar_community/isar.dart';
 
 /// Summary of one library update run.
 class LibraryUpdateResult {
   final int checked;
   final int newChapters;
+
+  /// Titles that couldn't be checked (see the Update errors screen).
   final int failed;
+
+  /// Titles left out by the update restrictions in settings.
   final int skipped;
   final DateTime finishedAt;
 
@@ -77,13 +93,70 @@ class LibraryUpdateService extends GetxService {
 
   bool _cancelled = false;
   final Map<String, Source> _activeTokens = {};
+  Timer? _firstCheck;
+  Timer? _periodicCheck;
 
-  /// Checks every library title of [types]. Returns null when a run is
-  /// already in progress.
+  /// How often the app checks whether an automatic update is due while open.
+  static const Duration autoCheckEvery = Duration(minutes: 30);
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Give the extension runtime time to load before the first check.
+    _firstCheck = Timer(const Duration(seconds: 90), _maybeAutoRun);
+    _periodicCheck = Timer.periodic(autoCheckEvery, (_) => _maybeAutoRun());
+  }
+
+  @override
+  void onClose() {
+    _firstCheck?.cancel();
+    _periodicCheck?.cancel();
+    super.onClose();
+  }
+
+  Future<void> _maybeAutoRun() async {
+    if (running.value) return;
+    final due = isAutoUpdateDue(
+      intervalHours: LibraryUpdateSettings.autoHours,
+      lastRunAt: HvKeys.hvLastUpdateRunAt.get<int>(0),
+      now: DateTime.now().millisecondsSinceEpoch,
+    );
+    if (!due) return;
+    final sources = Get.find<SourceController>();
+    if (sources.installedMangaExtensions.isEmpty &&
+        sources.installedNovelExtensions.isEmpty &&
+        sources.installedExtensions.isEmpty) {
+      return;
+    }
+    await run(automatic: true);
+  }
+
+  /// Media types the user wants checked.
+  static Set<ItemType> get enabledTypes => {
+        if (LibraryUpdateSettings.manga) ItemType.manga,
+        if (LibraryUpdateSettings.novel) ItemType.novel,
+        if (LibraryUpdateSettings.anime) ItemType.anime,
+      };
+
+  /// Checks library titles for new chapters.
+  ///
+  /// [types] defaults to the types enabled in settings. [onlyMediaKeys]
+  /// checks just those titles (retry from the errors screen) and bypasses
+  /// the skip restrictions. [automatic] runs honour the Wi-Fi-only setting
+  /// and post a notification. Returns null when a run is already going or
+  /// an automatic run isn't allowed on this network.
   Future<LibraryUpdateResult?> run({
-    Set<ItemType> types = const {ItemType.manga, ItemType.novel},
+    Set<ItemType>? types,
+    Set<String>? onlyMediaKeys,
+    bool automatic = false,
   }) async {
     if (running.value) return null;
+    if (automatic &&
+        LibraryUpdateSettings.wifiOnly &&
+        !await HvNetworkConditions.isUnmetered()) {
+      Logger.i('HV: automatic library update skipped (not on Wi-Fi)');
+      return null;
+    }
     running.value = true;
     _cancelled = false;
     done.value = 0;
@@ -91,12 +164,15 @@ class LibraryUpdateService extends GetxService {
     current.value = '';
 
     var checked = 0, newChapters = 0, failed = 0, skipped = 0;
+    final found = <HvChapterUpdate>[];
     try {
       final jobs = <_Job>[];
-      for (final type in types) {
-        final collected = _collectJobs(type);
+      final filter = LibraryUpdateSettings.filter;
+      for (final type in (types ?? enabledTypes)) {
+        final collected = _collectJobs(type, filter, onlyMediaKeys);
         jobs.addAll(collected.jobs);
         skipped += collected.skipped;
+        failed += collected.unavailable;
       }
       total.value = jobs.length;
 
@@ -118,7 +194,8 @@ class LibraryUpdateService extends GetxService {
               failed++;
             } else {
               checked++;
-              newChapters += outcome;
+              newChapters += outcome.length;
+              found.addAll(outcome);
             }
             done.value++;
             if (i < sourceJobs.length - 1) {
@@ -130,6 +207,17 @@ class LibraryUpdateService extends GetxService {
 
       await Future.wait(List.generate(sourceConcurrency, (_) => worker()));
       await UpdateRepository.prune();
+      if (found.isNotEmpty) {
+        await HvAutoDownload.queueNewChapters(found);
+        if (automatic && LibraryUpdateSettings.notify) {
+          final shown = await HvNotifications.showNewChapters(
+              found.length, [for (final u in found) u.mediaTitle ?? '?']);
+          if (!shown) {
+            snackBar('${found.length} new chapter'
+                '${found.length == 1 ? '' : 's'} in your library');
+          }
+        }
+      }
     } catch (e) {
       Logger.e('HV: library update failed: $e');
     } finally {
@@ -156,15 +244,48 @@ class LibraryUpdateService extends GetxService {
     _activeTokens.clear();
   }
 
-  ({List<_Job> jobs, int skipped}) _collectJobs(ItemType type) {
+  ({List<_Job> jobs, int skipped, int unavailable}) _collectJobs(
+      ItemType type, UpdateFilterSettings filter, Set<String>? onlyMediaKeys) {
     final sources = Get.find<SourceController>();
     final jobs = <_Job>[];
-    var skipped = 0;
+    var skipped = 0, unavailable = 0;
 
-    for (final id in LibraryMembership.idsOfType(type.index)) {
+    final listsById = <String, Set<String>>{};
+    for (final list in isar.customLists
+        .filter()
+        .mediaTypeIndexEqualTo(type.index)
+        .findAllSync()) {
+      for (final id in list.mediaIds ?? const <String>[]) {
+        listsById
+            .putIfAbsent(id, () => {})
+            .add(listKey(type.index, list.listName ?? ''));
+      }
+    }
+
+    for (final id in listsById.keys) {
+      if (id.isEmpty) continue;
+      if (onlyMediaKeys != null &&
+          !onlyMediaKeys.contains(hvMediaKey(type.index, id))) {
+        continue;
+      }
       final media = LibraryMembership.media(type.index, id);
       if (media == null) continue;
       final link = SourceLinkRepository.get(type.index, id);
+      if (onlyMediaKeys == null) {
+        final reason = updateSkipReason(
+          UpdateCandidate(
+            lists: listsById[id]!,
+            unreadCount: _unreadCount(media, link),
+            status: media.status,
+            started: (media.readChapters ?? const []).isNotEmpty,
+          ),
+          filter,
+        );
+        if (reason != null) {
+          skipped++;
+          continue;
+        }
+      }
       Source? source;
       if (link != null && link.isTrusted) {
         source = sources.findSourceById(link.sourceId, type);
@@ -172,7 +293,7 @@ class LibraryUpdateService extends GetxService {
         source = _guessSource(media, type, sources);
       }
       if (source == null) {
-        skipped++;
+        unavailable++;
         unawaited(_recordError(
           media,
           type,
@@ -187,7 +308,18 @@ class LibraryUpdateService extends GetxService {
       jobs.add(_Job(media, type, source,
           link != null && link.isTrusted ? link : null));
     }
-    return (jobs: jobs, skipped: skipped);
+    return (jobs: jobs, skipped: skipped, unavailable: unavailable);
+  }
+
+  /// Chapters seen on the source minus chapters read, or null when the
+  /// title hasn't been checked yet.
+  static int? _unreadCount(OfflineMedia media, HvSourceLink? link) {
+    final known = link?.knownChapterKeys.length ?? 0;
+    if (known == 0) return null;
+    final read = (media.readChapters ?? const [])
+        .where((c) => hvIsPageComplete(c.pageNumber, c.totalPages))
+        .length;
+    return known > read ? known - read : 0;
   }
 
   /// The source an unlinked title was last used with: the one remembered for
@@ -212,8 +344,8 @@ class LibraryUpdateService extends GetxService {
     return byName.length == 1 ? byName.first : null;
   }
 
-  /// Returns the number of new chapters, or null when the check failed.
-  Future<int?> _check(_Job job, SourceHealth health) async {
+  /// Returns the new chapters, or null when the check failed.
+  Future<List<HvChapterUpdate>?> _check(_Job job, SourceHealth health) async {
     final sourceId = job.source.id ?? '';
     if (health.isPaused(sourceId)) {
       await _recordError(job.media, job.type, sourceId, job.source.name,
@@ -236,20 +368,20 @@ class LibraryUpdateService extends GetxService {
               ));
       final chapters =
           Media.fromDManga(detail, job.type).altMediaContent ?? <Chapter>[];
-      final diff = await ChapterRecorder.record(
+      final record = await ChapterRecorder.record(
         link: link,
         chapters: chapters,
         reportNew: true,
         mediaTitle: job.title,
         poster: job.media.poster,
       );
-      if (diff.kind == ChapterDiffKind.empty) {
+      if (record.diff.kind == ChapterDiffKind.empty) {
         throw Exception('The source returned no chapters.');
       }
       await SourceLinkRepository.save(link);
       await UpdateRepository.clearError(job.mediaKey);
       health.recordSuccess(sourceId);
-      return diff.kind == ChapterDiffKind.changes ? diff.newIndexes.length : 0;
+      return record.updates;
     } catch (e) {
       if (_cancelled) return null;
       health.recordFailure(sourceId);

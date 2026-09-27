@@ -8,6 +8,7 @@ import Foundation
 import anymex_extension_runtime_bridge
 import app_links
 import audio_session
+import connectivity_plus
 import desktop_webview_window
 import device_info_plus
 import dynamic_color
@@ -16,6 +17,7 @@ import firebase_analytics
 import firebase_core
 import firebase_messaging
 import flutter_inappwebview_macos
+import flutter_local_notifications
 import flutter_media_session
 import flutter_qjs
 import flutter_tts
@@ -44,6 +46,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AnymexExtensionRuntimeBridgePlugin.register(with: registry.registrar(forPlugin: "AnymexExtensionRuntimeBridgePlugin"))
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
   AudioSessionPlugin.register(with: registry.registrar(forPlugin: "AudioSessionPlugin"))
+  ConnectivityPlusPlugin.register(with: registry.registrar(forPlugin: "ConnectivityPlusPlugin"))
   DesktopWebviewWindowPlugin.register(with: registry.registrar(forPlugin: "DesktopWebviewWindowPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
   DynamicColorPlugin.register(with: registry.registrar(forPlugin: "DynamicColorPlugin"))
@@ -52,6 +55,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FLTFirebaseCorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseCorePlugin"))
   FLTFirebaseMessagingPlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseMessagingPlugin"))
   InAppWebViewFlutterPlugin.register(with: registry.registrar(forPlugin: "InAppWebViewFlutterPlugin"))
+  FlutterLocalNotificationsPlugin.register(with: registry.registrar(forPlugin: "FlutterLocalNotificationsPlugin"))
   FlutterMediaSessionPlugin.register(with: registry.registrar(forPlugin: "FlutterMediaSessionPlugin"))
   FlutterQjsPlugin.register(with: registry.registrar(forPlugin: "FlutterQjsPlugin"))
   FlutterTtsPlugin.register(with: registry.registrar(forPlugin: "FlutterTtsPlugin"))
