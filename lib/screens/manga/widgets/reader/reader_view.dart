@@ -205,8 +205,18 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
         );
       }
 
-      // HV: the color filter is drawn once, by ReaderContentOverlay below;
-      // it was also applied here, doubling the tint.
+      if (widget.controller.colorFilterEnabled.value) {
+        final colorValue = widget.controller.colorFilterValue.value;
+        final blendModeIndex = widget.controller.colorFilterMode.value;
+        final blendMode = _blendModeFromIndex(blendModeIndex);
+        // HV: this is the one place the color filter is applied: it blends
+        // the pages with the chosen mode. ReaderContentOverlay no longer
+        // paints a second tint on top.
+        readerContent = ColorFiltered(
+          colorFilter: ColorFilter.mode(Color(colorValue), blendMode),
+          child: readerContent,
+        );
+      }
 
       return Stack(
         children: [
@@ -237,8 +247,6 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
     });
   }
 
-  // HV: unused since the duplicate color filter was removed (kept for upstream)
-  // ignore: unused_element
   static BlendMode _blendModeFromIndex(int index) {
     const modes = [
       BlendMode.srcOver,
@@ -363,6 +371,8 @@ class _ReaderViewState extends State<ReaderView> with TickerProviderStateMixin {
             fit: fitMode,
             alignment: Alignment.center,
             cropBorders: ctrl.cropImages.value,
+            onImageLoaded: (w, h) => // HV: wide pages alone in dual mode
+                HvReaderHooks.onPagedImageLoaded(ctrl, page.url, w, h),
             placeholder: _buildPageLoadingWidget(context,
                 pageIndex: index, pageUrl: page.url),
           ),

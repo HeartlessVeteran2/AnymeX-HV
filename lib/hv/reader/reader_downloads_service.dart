@@ -5,12 +5,15 @@ import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/common/media_key.dart';
 import 'package:anymex/hv/common/network_conditions.dart';
 import 'package:anymex/hv/common/read_state.dart';
+import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/reader/core/reader_downloads.dart';
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/screens/downloads/controller/download_controller.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
 import 'package:anymex/utils/logger.dart';
 import 'package:anymex/utils/media_downloader.dart';
+import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart'
+    show ItemType;
 import 'package:get/get.dart';
 
 /// Download-ahead and delete-after-read for the manga reader (from Otaku
@@ -121,6 +124,23 @@ class HvReaderDownloads {
     }
   }
 
+  /// Whether chapter [number] of the open title is read, by its saved
+  /// progress (else the reader's chapter list).
+  static bool _isRead(ReaderController c, double number) {
+    final saved = LibraryMembership.media(ItemType.manga.index, c.media.id)
+            ?.readChapters ??
+        const <Chapter>[];
+    return hvIsChapterRead([
+      for (final ch in [...saved, ...c.chapterList])
+        (
+          link: ch.link,
+          number: ch.number,
+          page: ch.pageNumber,
+          total: ch.totalPages,
+        ),
+    ], number: number);
+  }
+
   static Future<void> _deleteAfterRead(
       ReaderController c, Chapter? chapter) async {
     try {
@@ -137,7 +157,9 @@ class HvReaderDownloads {
         chapter.number!,
         HvKeys.hvDeleteAfterReadKeep.get<int>(0),
       );
-      if (target == null) return;
+      // Keeping the last N counts back from the chapter just finished; the
+      // chapter N back may never have been read (the user skipped ahead).
+      if (target == null || !_isRead(c, target)) return;
       final source = Get.find<SourceController>().activeMangaSource.value;
       if (source == null || !Get.isRegistered<DownloadController>()) return;
       final downloads = Get.find<DownloadController>();

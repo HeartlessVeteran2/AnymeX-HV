@@ -11,9 +11,6 @@ class ReaderContentOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final brightness = controller.customBrightnessValue.value;
-      final colorEnabled = controller.colorFilterEnabled.value;
-      final colorValue = controller.colorFilterValue.value;
-      final blendModeIndex = controller.colorFilterMode.value;
 
       return Stack(
         children: [
@@ -25,21 +22,16 @@ class ReaderContentOverlay extends StatelessWidget {
               ),
             ),
 
-          if (colorEnabled)
-            IgnorePointer(
-              child: CustomPaint(
-                painter: _ColorOverlayPainter(
-                  color: Color(colorValue),
-                  blendMode: _blendModeFromIndex(blendModeIndex),
-                ),
-                child: const SizedBox.expand(),
-              ),
-            ),
+          // HV: the color filter is applied by ReaderView's ColorFiltered,
+          // which honours the blend mode. This overlay painted it again into
+          // an empty layer, where every blend mode acts as a flat tint.
         ],
       );
     });
   }
 
+  // HV: unused since the color tint moved to ReaderView (kept for upstream)
+  // ignore: unused_element
   static BlendMode _blendModeFromIndex(int index) {
     const modes = [
       BlendMode.srcOver,
@@ -64,6 +56,8 @@ class ReaderContentOverlay extends StatelessWidget {
   }
 }
 
+// HV: unused, see above (kept for upstream)
+// ignore: unused_element
 class _ColorOverlayPainter extends CustomPainter {
   const _ColorOverlayPainter({required this.color, required this.blendMode});
 
