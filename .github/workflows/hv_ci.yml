@@ -13,6 +13,10 @@ on:
         description: "Also build a debug APK"
         type: boolean
         default: false
+      runtime_tests:
+        description: "Also run the app on Linux and exercise extensions (integration_test/hv)"
+        type: boolean
+        default: false
 
 env:
   FLUTTER_VERSION: "3.41.6"
@@ -85,3 +89,50 @@ jobs:
         with:
           name: anymex-hv-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+
+  # Runs the real app under a virtual display and drives the extension path
+  # end to end (repos, installing Mangayomi sources, search -> details ->
+  # pages, saved links, the update checker, the HV screens). Phase 2 reopens
+  # the app on the same data to check what phase 1 saved. Needs live network
+  # and third-party sites, so it's manual and never gates a PR; the logs
+  # (HVRESULT lines) and screenshots are uploaded as an artifact.
+  runtime-linux:
+    if: github.event_name == 'workflow_dispatch' && inputs.runtime_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Linux build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ninja-build libgtk-3-dev \
+            libwebkit2gtk-4.1-dev libmpv-dev liblzma-dev libsecret-1-dev \
+            libayatana-appindicator3-dev libjsoncpp-dev xvfb imagemagick
+      - name: Stub .env
+        run: |
+          printf 'AL_CLIENT_ID=0\nAL_CLIENT_SECRET=0\nSIMKL_CLIENT_ID=0\nSIMKL_CLIENT_SECRET=0\nMAL_CLIENT_ID=0\nMAL_CLIENT_SECRET=0\nCALLBACK_SCHEME=anymex://callback\nCOMMENTS_BASE_URL=https://whzwmfxngelicmjyxwmr.supabase.co/functions/v1\n' > .env
+      - run: flutter pub get
+      - name: Runtime tests
+        run: |
+          set +e
+          mkdir -p runtime-results
+          export HV_SHOTS="$PWD/runtime-results"
+          for phase in 1 2; do
+            xvfb-run -a -s "-screen 0 1280x800x24" \
+              flutter test integration_test/hv/extension_flow_test.dart \
+              -d linux --dart-define=HV_PHASE=$phase \
+              2>&1 | tee "runtime-results/phase$phase.log"
+            status=${PIPESTATUS[0]}
+            grep HVRESULT "runtime-results/phase$phase.log" >> "$GITHUB_STEP_SUMMARY" || true
+            if [ "$status" != 0 ]; then exit "$status"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anymex-hv-runtime-results
+          path: runtime-results/
