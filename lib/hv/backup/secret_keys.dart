@@ -18,6 +18,9 @@ const Set<String> hvSecretSettingKeys = {
   // the account profile fetched with it.
   'token',
   'profile',
+  // CookieManager (lib/controllers/network/cookie_manager.dart): signed-in
+  // sessions and Cloudflare clearance for extension sites.
+  'cookies',
 };
 
 /// Whether a settings row belongs with the auth tokens in a backup.
