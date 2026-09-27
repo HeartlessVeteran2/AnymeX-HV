@@ -51,6 +51,12 @@ class HvSourceLink {
   List<String> knownChapterKeys = [];
 
   int? lastCheckedAt;
+
+  /// Highest chapter (or episode) number on the source at the last check.
+  /// Used to tell how far behind the reader is: [knownChapterKeys] is a
+  /// union of every URL ever seen, across scanlators, so its length isn't a
+  /// chapter count.
+  double? latestChapterNumber;
   int? lastNewChapterAt;
 
   /// Whether the details page and the update checker may use this link

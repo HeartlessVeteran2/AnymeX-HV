@@ -32,58 +32,63 @@ const HvSourceLinkSchema = CollectionSchema(
       name: r'lastNewChapterAt',
       type: IsarType.long,
     ),
-    r'linkKey': PropertySchema(
+    r'latestChapterNumber': PropertySchema(
       id: 3,
+      name: r'latestChapterNumber',
+      type: IsarType.double,
+    ),
+    r'linkKey': PropertySchema(
+      id: 4,
       name: r'linkKey',
       type: IsarType.string,
     ),
     r'linkedAt': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'linkedAt',
       type: IsarType.long,
     ),
     r'matchScore': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'matchScore',
       type: IsarType.double,
     ),
     r'mediaId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'mediaId',
       type: IsarType.string,
     ),
     r'mediaTypeIndex': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'mediaTypeIndex',
       type: IsarType.long,
     ),
     r'serviceIndex': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'serviceIndex',
       type: IsarType.long,
     ),
     r'sourceId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'sourceId',
       type: IsarType.string,
     ),
     r'sourceName': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'sourceName',
       type: IsarType.string,
     ),
     r'title': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'title',
       type: IsarType.string,
     ),
     r'url': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'url',
       type: IsarType.string,
     ),
     r'userConfirmed': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'userConfirmed',
       type: IsarType.bool,
     )
@@ -170,17 +175,18 @@ void _hvSourceLinkSerialize(
   writer.writeStringList(offsets[0], object.knownChapterKeys);
   writer.writeLong(offsets[1], object.lastCheckedAt);
   writer.writeLong(offsets[2], object.lastNewChapterAt);
-  writer.writeString(offsets[3], object.linkKey);
-  writer.writeLong(offsets[4], object.linkedAt);
-  writer.writeDouble(offsets[5], object.matchScore);
-  writer.writeString(offsets[6], object.mediaId);
-  writer.writeLong(offsets[7], object.mediaTypeIndex);
-  writer.writeLong(offsets[8], object.serviceIndex);
-  writer.writeString(offsets[9], object.sourceId);
-  writer.writeString(offsets[10], object.sourceName);
-  writer.writeString(offsets[11], object.title);
-  writer.writeString(offsets[12], object.url);
-  writer.writeBool(offsets[13], object.userConfirmed);
+  writer.writeDouble(offsets[3], object.latestChapterNumber);
+  writer.writeString(offsets[4], object.linkKey);
+  writer.writeLong(offsets[5], object.linkedAt);
+  writer.writeDouble(offsets[6], object.matchScore);
+  writer.writeString(offsets[7], object.mediaId);
+  writer.writeLong(offsets[8], object.mediaTypeIndex);
+  writer.writeLong(offsets[9], object.serviceIndex);
+  writer.writeString(offsets[10], object.sourceId);
+  writer.writeString(offsets[11], object.sourceName);
+  writer.writeString(offsets[12], object.title);
+  writer.writeString(offsets[13], object.url);
+  writer.writeBool(offsets[14], object.userConfirmed);
 }
 
 HvSourceLink _hvSourceLinkDeserialize(
@@ -194,17 +200,18 @@ HvSourceLink _hvSourceLinkDeserialize(
   object.knownChapterKeys = reader.readStringList(offsets[0]) ?? [];
   object.lastCheckedAt = reader.readLongOrNull(offsets[1]);
   object.lastNewChapterAt = reader.readLongOrNull(offsets[2]);
-  object.linkKey = reader.readString(offsets[3]);
-  object.linkedAt = reader.readLong(offsets[4]);
-  object.matchScore = reader.readDouble(offsets[5]);
-  object.mediaId = reader.readString(offsets[6]);
-  object.mediaTypeIndex = reader.readLong(offsets[7]);
-  object.serviceIndex = reader.readLong(offsets[8]);
-  object.sourceId = reader.readString(offsets[9]);
-  object.sourceName = reader.readStringOrNull(offsets[10]);
-  object.title = reader.readStringOrNull(offsets[11]);
-  object.url = reader.readString(offsets[12]);
-  object.userConfirmed = reader.readBool(offsets[13]);
+  object.latestChapterNumber = reader.readDoubleOrNull(offsets[3]);
+  object.linkKey = reader.readString(offsets[4]);
+  object.linkedAt = reader.readLong(offsets[5]);
+  object.matchScore = reader.readDouble(offsets[6]);
+  object.mediaId = reader.readString(offsets[7]);
+  object.mediaTypeIndex = reader.readLong(offsets[8]);
+  object.serviceIndex = reader.readLong(offsets[9]);
+  object.sourceId = reader.readString(offsets[10]);
+  object.sourceName = reader.readStringOrNull(offsets[11]);
+  object.title = reader.readStringOrNull(offsets[12]);
+  object.url = reader.readString(offsets[13]);
+  object.userConfirmed = reader.readBool(offsets[14]);
   return object;
 }
 
@@ -222,26 +229,28 @@ P _hvSourceLinkDeserializeProp<P>(
     case 2:
       return (reader.readLongOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
-    case 5:
-      return (reader.readDouble(offset)) as P;
-    case 6:
       return (reader.readString(offset)) as P;
-    case 7:
+    case 5:
       return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readDouble(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
     case 8:
       return (reader.readLong(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 10:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 11:
       return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 13:
+      return (reader.readString(offset)) as P;
+    case 14:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -911,6 +920,90 @@ extension HvSourceLinkQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'latestChapterNumber',
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'latestChapterNumber',
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'latestChapterNumber',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'latestChapterNumber',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'latestChapterNumber',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterFilterCondition>
+      latestChapterNumberBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'latestChapterNumber',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -2041,6 +2134,20 @@ extension HvSourceLinkQuerySortBy
     });
   }
 
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy>
+      sortByLatestChapterNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latestChapterNumber', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy>
+      sortByLatestChapterNumberDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latestChapterNumber', Sort.desc);
+    });
+  }
+
   QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy> sortByLinkKey() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'linkKey', Sort.asc);
@@ -2221,6 +2328,20 @@ extension HvSourceLinkQuerySortThenBy
     });
   }
 
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy>
+      thenByLatestChapterNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latestChapterNumber', Sort.asc);
+    });
+  }
+
+  QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy>
+      thenByLatestChapterNumberDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latestChapterNumber', Sort.desc);
+    });
+  }
+
   QueryBuilder<HvSourceLink, HvSourceLink, QAfterSortBy> thenByLinkKey() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'linkKey', Sort.asc);
@@ -2383,6 +2504,13 @@ extension HvSourceLinkQueryWhereDistinct
     });
   }
 
+  QueryBuilder<HvSourceLink, HvSourceLink, QDistinct>
+      distinctByLatestChapterNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'latestChapterNumber');
+    });
+  }
+
   QueryBuilder<HvSourceLink, HvSourceLink, QDistinct> distinctByLinkKey(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2483,6 +2611,13 @@ extension HvSourceLinkQueryProperty
       lastNewChapterAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastNewChapterAt');
+    });
+  }
+
+  QueryBuilder<HvSourceLink, double?, QQueryOperations>
+      latestChapterNumberProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'latestChapterNumber');
     });
   }
 
