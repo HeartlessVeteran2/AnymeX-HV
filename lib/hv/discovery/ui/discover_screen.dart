@@ -608,6 +608,28 @@ class _RecommendedTabState extends State<_RecommendedTab> {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${snapshot.error}'
+                              .replaceFirst('Exception: ', ''),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.tonal(
+                          onPressed: () => _reload(refresh: true),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
               final recs = snapshot.data ?? const <RankedRec>[];
               if (recs.isEmpty) {
                 return const Center(
