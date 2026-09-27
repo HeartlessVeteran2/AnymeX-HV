@@ -29,8 +29,9 @@ class HvReaderHooks {
   static void attach(ReaderController c) {
     HvSeriesSettings.attach(c);
 
-    // Delete-after-read runs when the reader moves off a finished chapter;
-    // download-ahead checks progress on every page change.
+    // Finished chapters are noted as the reader moves off them (their
+    // downloads are deleted when it closes); download-ahead checks progress
+    // on every page change.
     Chapter? shown = c.currentChapter.value;
     ever<Chapter?>(c.currentChapter, (chapter) {
       final left = shown;
@@ -134,7 +135,7 @@ class HvReaderHooks {
 
   /// Called when the reader closes.
   static void detach(ReaderController c) {
-    HvReaderDownloads.onChapterLeft(c, c.currentChapter.value);
+    HvReaderDownloads.onReaderClosed(c);
   }
 
   /// Shows [spreadIndex] in either reading mode. The reader's own page

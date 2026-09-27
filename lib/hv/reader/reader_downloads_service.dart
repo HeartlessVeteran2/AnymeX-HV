@@ -21,6 +21,11 @@ class HvReaderDownloads {
 
   static final Expando<Set<String>> _aheadDone = Expando('hvDownloadAhead');
 
+  /// Finished chapters left during this reading session; their downloads
+  /// are deleted when the reader closes (like Mihon), not while their pages
+  /// may still be on screen in continuous mode.
+  static final Expando<List<Chapter>> _finished = Expando('hvFinished');
+
   static String _modeKey(Media m) =>
       'hvDeleteAfterRead_${hvMediaKey(m.mediaType.index, m.id)}';
 
@@ -47,7 +52,10 @@ class HvReaderDownloads {
       if (count <= 0 || chapter?.number == null) return;
       final key = _chapterKey(chapter);
       final pages = c.loadedChapterPages[key]?.length ?? c.pageList.length;
-      if (pages <= 0 || page / pages < kDownloadAheadAt) return;
+      // page > pages is the reader's "open at the bottom" placeholder.
+      if (pages <= 0 || page > pages || page / pages < kDownloadAheadAt) {
+        return;
+      }
       final done = _aheadDone[c] ??= <String>{};
       if (!done.add(key)) return;
 
@@ -95,8 +103,25 @@ class HvReaderDownloads {
     }
   }
 
-  /// Called when the reader moves off [chapter] or closes on it.
-  static Future<void> onChapterLeft(
+  /// Called when the reader moves off [chapter]: remembers it if finished.
+  static void onChapterLeft(ReaderController c, Chapter? chapter) {
+    if (chapter?.number == null) return;
+    if (!hvIsPageComplete(chapter!.pageNumber, chapter.totalPages)) return;
+    (_finished[c] ??= []).add(chapter);
+  }
+
+  /// Called when the reader closes: deletes downloads of the chapters
+  /// finished in this session (and the one it closes on).
+  static Future<void> onReaderClosed(ReaderController c) async {
+    final current = c.currentChapter.value;
+    final chapters = [...?_finished[c], if (current != null) current];
+    _finished[c] = null;
+    for (final chapter in chapters) {
+      await _deleteAfterRead(c, chapter);
+    }
+  }
+
+  static Future<void> _deleteAfterRead(
       ReaderController c, Chapter? chapter) async {
     try {
       if (chapter?.number == null) return;
@@ -113,11 +138,6 @@ class HvReaderDownloads {
         HvKeys.hvDeleteAfterReadKeep.get<int>(0),
       );
       if (target == null) return;
-      // Never the chapter on screen now.
-      if (c.currentChapter.value?.number == target &&
-          c.currentChapter.value != chapter) {
-        return;
-      }
       final source = Get.find<SourceController>().activeMangaSource.value;
       if (source == null || !Get.isRegistered<DownloadController>()) return;
       final downloads = Get.find<DownloadController>();
