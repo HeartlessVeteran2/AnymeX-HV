@@ -3,6 +3,7 @@ import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
+import 'package:anymex/hv/source_link/core/link_policy.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -36,7 +37,10 @@ class HvDetailsHooks {
         return _mapped(media.id, media.title, media.mediaType);
       }
       final link = SourceLinkRepository.get(media.mediaType.index, media.id);
+      // Ids are only unique within a service: AniList 105778 and MAL 105778
+      // are different titles.
       if (link == null ||
+          link.serviceIndex != media.serviceType.index ||
           link.sourceId != source.id ||
           link.url.isEmpty ||
           !link.isTrusted) {
@@ -49,15 +53,16 @@ class HvDetailsHooks {
     }
   }
 
-  /// Forget the saved match after it stopped working, so the next attempt
-  /// searches again.
-  static Future<void> forgetMapping(Media media) async {
+  /// Stop using the saved match for the rest of this session after opening
+  /// it failed, so the details page searches instead.
+  ///
+  /// The link itself is kept: the failure may be temporary (offline, a
+  /// timeout, a request cancelled because another details page opened), and
+  /// deleting it would lose a match the user picked and the chapters the
+  /// update checker has already seen. A search that finds a better match
+  /// replaces it through [onDetailFetched].
+  static void skipSavedMapping(Media media) {
     _failedThisSession.add(_key(media));
-    try {
-      await SourceLinkRepository.remove(media.mediaType.index, media.id);
-    } catch (e) {
-      Logger.e('HV: removing source link failed: $e');
-    }
   }
 
   /// Called after the details page fetched a title's chapters from [source].
@@ -87,10 +92,25 @@ class HvDetailsHooks {
                 )?.score ??
               0.0;
 
-      final existing = SourceLinkRepository.get(typeIndex, media.id);
+      final serviceIndex = media.serviceType.index;
+      final confirmed = userConfirmed || isSelf;
+      final stored = SourceLinkRepository.get(typeIndex, media.id);
+      // A link saved for the same id on another service is a different title.
+      final existing =
+          stored != null && stored.serviceIndex == serviceIndex ? stored : null;
       final sameTarget = existing != null &&
           existing.sourceId == sourceId &&
           existing.url == mapped.id;
+      if (existing != null &&
+          !sameTarget &&
+          !hvShouldReplaceLink(
+            existingConfirmed: existing.userConfirmed,
+            existingTrusted: existing.isTrusted,
+            newConfirmed: confirmed,
+            newTrusted: confirmed || score >= _trustedScore,
+          )) {
+        return;
+      }
 
       // A different source or entry starts a fresh chapter baseline.
       final link = sameTarget
@@ -102,12 +122,12 @@ class HvDetailsHooks {
       final wasConfirmed = sameTarget && existing.userConfirmed;
       final linkedAt = sameTarget ? existing.linkedAt : 0;
       link
-        ..serviceIndex = media.serviceType.index
+        ..serviceIndex = serviceIndex
         ..sourceId = sourceId
         ..sourceName = source.name
         ..url = mapped.id
         ..title = mapped.title
-        ..userConfirmed = userConfirmed || isSelf || wasConfirmed
+        ..userConfirmed = confirmed || wasConfirmed
         ..matchScore = score
         ..linkedAt =
             linkedAt > 0 ? linkedAt : DateTime.now().millisecondsSinceEpoch;
@@ -126,6 +146,9 @@ class HvDetailsHooks {
       Logger.e('HV: saving source link failed: $e');
     }
   }
+
+  /// Same threshold as [HvSourceLink.isTrusted].
+  static const _trustedScore = 0.7;
 
   static Media _mapped(String url, String title, d.ItemType type) => Media(
         id: url,
