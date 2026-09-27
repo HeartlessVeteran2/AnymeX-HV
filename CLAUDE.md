@@ -28,6 +28,23 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
 - Pure logic (matching, diffing, filters, ...) stays free of Flutter/Isar/GetX imports so it can be
   unit-tested in `test/hv/`.
 
+## HV features (where they live)
+
+| Feature | Code | Hooked from |
+|---|---|---|
+| Title matcher | `lib/hv/matching/` | used by links, updates |
+| Saved source links | `lib/hv/source_link/` | `media_details_controller.dart` (mapping + fetch) |
+| Library update checker, Updates / Update errors screens, settings, notifications, auto-download | `lib/hv/library_update/`, `lib/hv/notifications/` | `main.dart`, `my_library.dart` header, settings sheet, `settings.dart` |
+| Chapter list filters / mark read | `lib/hv/chapters/` | `chapter_list_builder.dart` |
+| Library filters, grouping, hidden lists, search syntax, multi-select | `lib/hv/library/` | `library_controller.dart`, `my_library.dart`, `renameCustomList` |
+| Reader: page gallery, bookmarks/notes, per-series settings, download ahead, delete after read, dual page, transition | `lib/hv/reader/`, `lib/hv/bookmarks/` | `reader_controller.dart` (`HvReaderHooks.attach/detach`, `_savePreferences`, `chapterNavigator`, spread pairing), top bars, `reader_view.dart`, `tabbed_reader_settings.dart` |
+| Discover (feed, saved searches, library recommendations) | `lib/hv/discovery/` | settings sheet |
+| Backup token fix | `lib/hv/backup/secret_keys.dart` | `backup_restore_service.dart` |
+
+Isar collections added: `HvSourceLink`, `HvChapterUpdate`, `HvUpdateError`, `HvPageBookmark`,
+`HvBookmarkCollection`, `HvReaderNote` (all registered in `lib/hv/hv_bootstrap.dart`).
+Widgets that sit in a `Stack` return `Positioned` at the top with the `Obx` inside it.
+
 ## Commands
 
 ```bash
