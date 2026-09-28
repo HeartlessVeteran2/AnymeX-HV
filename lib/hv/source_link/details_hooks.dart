@@ -4,6 +4,7 @@ import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
 import 'package:anymex/hv/source_link/core/link_policy.dart';
+import 'package:anymex/hv/source_link/link_merge.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -147,18 +148,20 @@ class HvDetailsHooks {
         );
       }
       // Recording awaited: another fetch may have saved a link meanwhile.
-      // Check the policy again against that one before overwriting it.
+      // A different entry must pass the policy again before it's replaced;
+      // the same entry is merged, so what that fetch recorded isn't lost.
       final latest = SourceLinkRepository.get(typeIndex, media.id);
-      if (latest != null &&
-          latest.serviceIndex == serviceIndex &&
-          !(latest.sourceId == sourceId && latest.url == mapped.id) &&
-          !hvShouldReplaceLink(
-            existingConfirmed: latest.userConfirmed,
-            existingTrusted: latest.isTrusted,
-            newConfirmed: confirmed,
-            newTrusted: confirmed || score >= _trustedScore,
-          )) {
-        return;
+      if (latest != null && latest.serviceIndex == serviceIndex) {
+        if (latest.sourceId == sourceId && latest.url == mapped.id) {
+          hvMergeSavedLink(link, latest);
+        } else if (!hvShouldReplaceLink(
+          existingConfirmed: latest.userConfirmed,
+          existingTrusted: latest.isTrusted,
+          newConfirmed: confirmed,
+          newTrusted: confirmed || score >= _trustedScore,
+        )) {
+          return;
+        }
       }
       await SourceLinkRepository.save(link);
     } catch (e) {
