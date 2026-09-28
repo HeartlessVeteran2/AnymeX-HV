@@ -205,36 +205,31 @@ void main() {
       _log('$name results: ${results.length}'
           '${results.isNotEmpty ? ' first: ${results.first.title}' : ''}');
       if (results.isEmpty) continue;
-      // The first hit can be an odd entry; try up to three.
-      DMedia? first;
-      var chapters = const <DEpisode>[];
+      // A hit can be an odd entry, or have no hosted pages (MangaDex lists
+      // licensed chapters as links to the official site); try up to three.
+      var gotPages = false;
       for (final candidate in results.take(3)) {
         final detail = await _try('$name details "${candidate.title}"',
             () => installed.methods.getDetail(DMedia.withUrl(candidate.url!)));
-        final found = detail?.episodes ?? const <DEpisode>[];
-        if (found.isNotEmpty) {
-          first = candidate;
-          chapters = found;
-          break;
+        final chapters = detail?.episodes ?? const <DEpisode>[];
+        _log('$name "${candidate.title}" chapters: ${chapters.length}');
+        if (chapters.isEmpty) continue;
+        final pageList = await _try(
+            '$name "${candidate.title}" pages',
+            () => installed.methods.getPageList(DEpisode(
+                episodeNumber: chapters.last.episodeNumber,
+                url: chapters.last.url)));
+        _log('$name "${candidate.title}" pages: ${pageList?.length ?? 0}');
+        if (pageList?.isEmpty ?? true) continue;
+        gotPages = true;
+        if (libraryItem == null) {
+          libraryItem = candidate;
+          librarySource = installed;
+          firstChapterUrl = chapters.last.url;
         }
+        break;
       }
-      if (first == null) {
-        _log('$name chapters: 0');
-        continue;
-      }
-      _log('$name chapters: ${chapters.length}');
-      if (chapters.isEmpty) continue;
-      final pageList = await _try(
-          '$name pages',
-          () => installed.methods.getPageList(DEpisode(
-              episodeNumber: chapters.last.episodeNumber,
-              url: chapters.last.url)));
-      _log('$name pages: ${pageList?.length ?? 0}');
-      if ((pageList?.isNotEmpty ?? false) && libraryItem == null) {
-        libraryItem = first;
-        librarySource = installed;
-        firstChapterUrl = chapters.last.url;
-      }
+      _log('$name search -> details -> pages: ${gotPages ? 'ok' : 'NO'}');
     }
 
     if (libraryItem != null && librarySource != null) {
