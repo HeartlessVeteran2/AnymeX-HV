@@ -53,9 +53,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: "7f5f884ba7e33845f8d7877aaba76a91cb29ee1c"
-      url: "https://github.com/RyanYuuki/AnymeXExtensionRuntimeBridge.git"
+      ref: "100438cfa10870e362d54d32b9e7e72eae9d317d"
+      resolved-ref: "100438cfa10870e362d54d32b9e7e72eae9d317d"
+      url: "https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV.git"
     source: git
     version: "1.6.1"
   app_links:
