@@ -4,7 +4,8 @@ import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/database/kv_helper.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/common/media_key.dart';
-import 'package:anymex/hv/common/read_state.dart';
+import 'package:anymex/hv/library_update/core/unread.dart';
+import 'package:anymex/hv/library_update/progress.dart';
 import 'package:anymex/hv/library/core/library_filter.dart';
 import 'package:anymex/hv/library/core/library_search.dart';
 import 'package:anymex/hv/library/selection/library_selection.dart';
@@ -156,21 +157,12 @@ class HvLibraryHooks {
 
   static HvLibraryFacts facts(OfflineMedia m, ItemType type, HvSourceLink? link,
       Set<String> titlesWithUpdates) {
-    final isAnime = type == ItemType.anime;
-    final started = isAnime
-        ? (m.watchedEpisodes ?? const []).isNotEmpty ||
-            m.currentEpisode != null
-        : (m.readChapters ?? const []).isNotEmpty;
-    var unread = 0;
-    if (!isAnime && link != null && link.knownChapterKeys.isNotEmpty) {
-      final read = (m.readChapters ?? const [])
-          .where((c) => hvIsPageComplete(c.pageNumber, c.totalPages))
-          .length;
-      unread = link.knownChapterKeys.length - read;
-    }
+    final progress = HvProgress.of(m, type);
     return HvLibraryFacts(
-      unreadCount: unread < 0 ? 0 : unread,
-      started: started,
+      unreadCount: hvUnreadEstimate(
+              link?.latestChapterNumber, progress.finishedNumbers) ??
+          0,
+      started: progress.started,
       completed: isCompletedStatus(m.status),
       hasUpdates:
           titlesWithUpdates.contains(hvMediaKey(type.index, m.mediaId ?? '')),

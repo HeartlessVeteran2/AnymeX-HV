@@ -9,8 +9,11 @@ class UpdateRepository {
   /// Updates older than this are pruned after each run.
   static const Duration keepFor = Duration(days: 90);
 
-  static Future<void> addUpdates(List<HvChapterUpdate> updates) async {
-    if (updates.isEmpty) return;
+  /// Saves [updates] and returns the ones that were actually new.
+  static Future<List<HvChapterUpdate>> addUpdates(
+      List<HvChapterUpdate> updates) async {
+    if (updates.isEmpty) return const [];
+    final added = <HvChapterUpdate>[];
     await isar.writeTxn(() async {
       for (final update in updates) {
         // A chapter already recorded (e.g. by a details refresh) keeps its
@@ -19,8 +22,10 @@ class UpdateRepository {
             await isar.hvChapterUpdates.getByUpdateKey(update.updateKey);
         if (existing != null) continue;
         await isar.hvChapterUpdates.put(update);
+        added.add(update);
       }
     });
+    return added;
   }
 
   /// Visible (not dismissed) updates, newest first; re-emits on every change.
