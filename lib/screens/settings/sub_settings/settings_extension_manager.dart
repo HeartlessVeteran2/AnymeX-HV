@@ -17,6 +17,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
+import 'package:anymex/hv/extensions/bridge_repo.dart';
 
 class SettingsExtensionManager extends StatefulWidget {
   const SettingsExtensionManager({super.key});
@@ -335,7 +336,7 @@ class _SettingsExtensionManagerState extends State<SettingsExtensionManager> {
 
   Future<void> _openReleasesPage() async {
     final uri = Uri.parse(
-        'https://github.com/RyanYuuki/AnymeXExtensionRuntimeBridge/releases');
+        'https://github.com/$hvBridgeRepo/releases'); // HV: our bridge fork
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {

@@ -16,10 +16,14 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
 - Navigation: `navigate(() => Page())` from `lib/utils/function.dart`.
 - Extensions come from `anymex_extension_runtime_bridge` (git dependency); sources expose
   `search`, `getDetail`, `getPageList`, `getLatestUpdates`, ...
-- The bridge is pinned to our fork, `HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV`, by
-  commit. Fix bridge bugs there (small PR on the fork), then bump `ref:` in `pubspec.yaml` and
-  run `flutter pub get`. The fork ignores its own `test/`; bridge tests live in
-  `test/hv/extensions/`. `libtorrent_flutter` still comes from upstream.
+- The bridge is our fork, `HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV`
+  (`hvBridgeRepo` in `lib/hv/extensions/bridge_repo.dart`), pinned by commit in `pubspec.yaml`
+  for both `anymex_extension_runtime_bridge` and `libtorrent_flutter`. Fix bridge bugs there
+  (small PR on the fork), then bump both `ref:`s and run `flutter pub get`. The fork ignores its
+  own `test/`; bridge tests live in `test/hv/extensions/`.
+- The Android runtime host APK / desktop jar come from the fork's releases (plugin manager,
+  `RuntimeDownloader`). They are upstream's builds, copied daily by the fork's
+  `mirror-runtime-releases` workflow; a release with a higher tag published on the fork wins.
 
 ## Where the fork's code lives
 

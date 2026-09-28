@@ -11,10 +11,11 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:anymex/widgets/anymex_widgets/anymex_text.dart';
+import 'package:anymex/hv/extensions/bridge_repo.dart';
 
 class PluginManager {
-  static const String _latestReleaseUrl =
-      'https://api.github.com/repos/RyanYuuki/AnymeXExtensionRuntimeBridge/releases/latest';
+  static const String _latestReleaseUrl = // HV: our bridge fork
+      'https://api.github.com/repos/$hvBridgeRepo/releases/latest';
 
   String get installedVersion => AnymeXRuntimeBridge.installedVersion;
 
@@ -164,7 +165,7 @@ class PluginManager {
   Future<List<PluginRelease>> fetchReleases() async {
     try {
       final response = await http.get(
-        Uri.parse('https://api.github.com/repos/RyanYuuki/AnymeXExtensionRuntimeBridge/releases'),
+        Uri.parse('https://api.github.com/repos/$hvBridgeRepo/releases'), // HV
         headers: const {'Accept': 'application/vnd.github+json'},
       );
       if (response.statusCode != 200) return [];

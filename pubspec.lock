@@ -53,8 +53,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "100438cfa10870e362d54d32b9e7e72eae9d317d"
-      resolved-ref: "100438cfa10870e362d54d32b9e7e72eae9d317d"
+      ref: ea937c1449c618f5b193eb768cfe158679e9a7fa
+      resolved-ref: ea937c1449c618f5b193eb768cfe158679e9a7fa
       url: "https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV.git"
     source: git
     version: "1.6.1"
@@ -1351,9 +1351,9 @@ packages:
     dependency: "direct overridden"
     description:
       path: "packages/libtorrent_flutter"
-      ref: main
-      resolved-ref: fcf1d503156b3f9144095345d0dc673366329953
-      url: "https://github.com/RyanYuuki/AnymeXExtensionRuntimeBridge.git"
+      ref: ea937c1449c618f5b193eb768cfe158679e9a7fa
+      resolved-ref: ea937c1449c618f5b193eb768cfe158679e9a7fa
+      url: "https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV.git"
     source: git
     version: "1.8.5"
   lints:
