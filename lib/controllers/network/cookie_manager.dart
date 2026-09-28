@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart' as webview;
 import 'package:rhttp/rhttp.dart';
 import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/safe_kv.dart';
 
 class CookieManager extends Interceptor {
   static const _storageKey = "cookies";
@@ -11,6 +12,9 @@ class CookieManager extends Interceptor {
   Map<String, StoredCookie>? _cache;
 
   final Map<String, StoredCookie> _sessionCookies = {};
+
+  // HV: saved on every request; must not fail it (see HvSafeKvWriter).
+  final _hvStore = hvSafeStringKey(_storageKey);
 
   Map<String, StoredCookie> _loadAll() {
     if (_cache != null) {
@@ -46,8 +50,7 @@ class CookieManager extends Interceptor {
 
     _cache = cookies;
 
-    KvHelper.set<String>(
-      _storageKey,
+    _hvStore.write( // HV: was KvHelper.set
       jsonEncode(cookies.map((k, v) => MapEntry(k, v.toJson()))),
     );
   }
@@ -155,7 +158,7 @@ class CookieManager extends Interceptor {
     _cache = {};
     _sessionCookies.clear();
 
-    KvHelper.set<String>(_storageKey, "{}");
+    _hvStore.write("{}"); // HV: was KvHelper.set
   }
 
   Future<void> deleteCookiesForDomain(String domain) async {
@@ -502,7 +505,7 @@ class CookieManager extends Interceptor {
   void clearPersistentCookies() {
     _cache?.clear();
 
-    KvHelper.set<String>(_storageKey, "{}");
+    _hvStore.write("{}"); // HV: was KvHelper.set
   }
 
   List<StoredCookie> getCookiesForDomain(String domain) {
@@ -554,7 +557,7 @@ class CookieManager extends Interceptor {
     _cache = {};
     _sessionCookies.clear();
 
-    KvHelper.set<String>(_storageKey, "{}");
+    _hvStore.write("{}"); // HV: was KvHelper.set
 
     await webview.CookieManager.instance().deleteAllCookies();
   }
