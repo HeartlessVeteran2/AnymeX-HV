@@ -92,6 +92,7 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
     }
 
     final edges = <RecEdge>[];
+    var failedBatches = 0;
     final anilistType = type == ItemType.anime ? 'ANIME' : 'MANGA';
     Future<void> fetch(Map<String, dynamic> variables) async {
       final data = await AnilistApi().postQuery(_query, variables: {
@@ -100,7 +101,11 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
         'page': 1,
       });
       final media = data?['data']?['Page']?['media'];
-      if (media is! List) return;
+      if (media is! List) {
+        // postQuery returns null (it doesn't throw) when AniList fails.
+        failedBatches++;
+        return;
+      }
       for (final m in media) {
         final from = m['title']?['userPreferred'] as String? ?? '?';
         final nodes = m['recommendations']?['nodes'];
@@ -139,17 +144,26 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
       }
     } catch (e) {
       Logger.e('HV: recommendations failed: $e');
+      failedBatches++;
     }
 
+    if (failedBatches > 0 && edges.isEmpty) {
+      throw Exception("Couldn't reach AniList. Check your connection and "
+          'try again.');
+    }
     final ranked = rankRecommendations(
       edges,
       excludeIds: {...anilistIds, ...titleById.keys},
       excludeMalIds: malIds,
     );
-    KvHelper.set(_cacheKey(type), {
-      'at': DateTime.now().millisecondsSinceEpoch,
-      'items': [for (final r in ranked.take(100)) r.toJson()],
-    });
+    // A partial result is shown but not cached, so the next visit retries
+    // instead of keeping it for a day.
+    if (failedBatches == 0) {
+      KvHelper.set(_cacheKey(type), {
+        'at': DateTime.now().millisecondsSinceEpoch,
+        'items': [for (final r in ranked.take(100)) r.toJson()],
+      });
+    }
     return ranked.take(100).toList();
   }
 
