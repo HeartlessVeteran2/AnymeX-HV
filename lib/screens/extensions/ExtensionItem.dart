@@ -42,13 +42,17 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
   Future<void> _handleInstall() async {
     if (_isLoading) return;
     _setLoading(true);
+    var hvDone = false; // HV
     try {
       await widget.source.install();
+      hvDone = true; // HV: a failed refresh afterwards isn't a failed install
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i(e.toString());
-      hvShowExtensionError(e, widget.source.name, HvExtensionAction.install); // HV
+      if (!hvDone) {
+        hvShowExtensionError(e, widget.source.name, HvExtensionAction.install); // HV
+      }
     } finally {
       _setLoading(false);
     }
@@ -57,14 +61,18 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
   Future<void> _handleUpdate() async {
     if (_isLoading) return;
     _setLoading(true);
+    var hvDone = false; // HV
     try {
       final manager = getSourceManager(widget.source);
       await manager.updateSource(widget.source);
+      hvDone = true; // HV: a failed refresh afterwards isn't a failed update
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i(e.toString());
-      hvShowExtensionError(e, widget.source.name, HvExtensionAction.update); // HV
+      if (!hvDone) {
+        hvShowExtensionError(e, widget.source.name, HvExtensionAction.update); // HV
+      }
     } finally {
       _setLoading(false);
     }
@@ -72,14 +80,18 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
 
   Future<void> _handleUninstall() async {
     _setLoading(true);
+    var hvDone = false; // HV
     try {
       Logger.i("Uninstalling => ${widget.source.id}");
       await widget.source.uninstall();
+      hvDone = true; // HV: a failed refresh afterwards isn't a failed remove
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i("Uninstall Failed => ${e.toString()}");
-      hvShowExtensionError(e, widget.source.name, HvExtensionAction.uninstall); // HV
+      if (!hvDone) {
+        hvShowExtensionError(e, widget.source.name, HvExtensionAction.uninstall); // HV
+      }
     } finally {
       _setLoading(false);
     }

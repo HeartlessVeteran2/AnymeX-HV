@@ -26,6 +26,8 @@ class HvReaderKeys {
     }
     final arrow = _arrow(key);
     if (arrow == null) return false;
+    // No page view yet (pages loading): turning would throw.
+    if (controller.pageController?.hasClients != true) return true;
     switch (hvPagedArrowTurn(arrow,
         reversed: controller.readingDirection.value.reversed)) {
       case HvTurn.forward:

@@ -146,6 +146,12 @@ class _SubsamplingImageProviderState extends State<SubsamplingImageProvider> {
               if (state.extendedImageLoadState == ext.LoadState.loading) {
                 return widget.placeholder;
               }
+              if (state.extendedImageLoadState == ext.LoadState.completed &&
+                  state.extendedImageInfo != null) {
+                final img = state.extendedImageInfo!.image; // HV: wide pages
+                widget.onImageLoaded
+                    ?.call(img.width.toDouble(), img.height.toDouble());
+              }
               if (state.extendedImageLoadState == ext.LoadState.failed) {
                 return _buildErrorWidget(context, () => state.reLoadImage());
               }
@@ -195,6 +201,10 @@ class _SubsamplingImageProviderState extends State<SubsamplingImageProvider> {
               panEnabled: false,
               zoomEnabled: false,
               quickScaleEnabled: false,
+              onImageLoaded: widget.onImageLoaded == null // HV: wide pages
+                  ? null
+                  : (w, h) =>
+                      widget.onImageLoaded!(w.toDouble(), h.toDouble()),
             );
           }
         }
