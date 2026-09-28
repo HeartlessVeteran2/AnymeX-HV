@@ -59,6 +59,13 @@ void main() {
     expect(m.isFullData, isFalse);
   });
 
+  test('a field that is not a string is ignored', () {
+    final odd = {..._mangadex, 'apiUrl': {'url': 'x'}, 'dateFormat': 5};
+    final m = MSource.fromJson(odd).toMSource();
+    expect(m.apiUrl, isNull);
+    expect(m.dateFormat, isNull);
+  });
+
   test('a source installed without them gets them from its repo entry', () {
     final old = Map<String, dynamic>.from(_madara)
       ..remove('apiUrl')
