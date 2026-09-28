@@ -1,3 +1,4 @@
+import 'package:anymex/hv/extensions/repo_list_fix.dart';
 import 'package:anymex/hv/library_update/library_update_service.dart';
 import 'package:anymex/hv/library_update/models/hv_chapter_update.dart';
 import 'package:anymex/hv/library_update/models/hv_update_error.dart';
@@ -27,5 +28,6 @@ class HvBootstrap {
     if (!Get.isRegistered<LibraryUpdateService>()) {
       Get.put(LibraryUpdateService(), permanent: true);
     }
+    HvRepoListFix.attach();
   }
 }
