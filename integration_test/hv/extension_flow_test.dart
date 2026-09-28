@@ -135,6 +135,10 @@ void main() {
     while (FlutterError.onError == testHandler && DateTime.now().isBefore(end)) {
       await Future<void>.delayed(const Duration(milliseconds: 2));
     }
+    // Wrapping the test's own handler would miss everything once the app
+    // installs its handler later.
+    expect(FlutterError.onError, isNot(same(testHandler)),
+        reason: 'the app did not start within 60 s');
     final appHandler = FlutterError.onError;
     FlutterError.onError = (details) {
       _errors.add(details.exceptionAsString().split('\n').first);
