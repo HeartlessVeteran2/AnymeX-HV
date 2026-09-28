@@ -52,6 +52,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       Logger.i(e.toString());
       if (!hvDone) {
         hvShowExtensionError(e, widget.source.name, HvExtensionAction.install); // HV
+      } else {
+        widget.onUpdate?.call(); // HV: the list still changed
       }
     } finally {
       _setLoading(false);
@@ -72,6 +74,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       Logger.i(e.toString());
       if (!hvDone) {
         hvShowExtensionError(e, widget.source.name, HvExtensionAction.update); // HV
+      } else {
+        widget.onUpdate?.call(); // HV: the list still changed
       }
     } finally {
       _setLoading(false);
@@ -91,6 +95,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       Logger.i("Uninstall Failed => ${e.toString()}");
       if (!hvDone) {
         hvShowExtensionError(e, widget.source.name, HvExtensionAction.uninstall); // HV
+      } else {
+        widget.onUpdate?.call(); // HV: the list still changed
       }
     } finally {
       _setLoading(false);
