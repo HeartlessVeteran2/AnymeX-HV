@@ -13,6 +13,11 @@ void main() {
     expect(hvIsSecretSettingKey(DiscordKeys.profile.name), isTrue);
   });
 
+  test('saved site cookies are secret', () {
+    // CookieManager stores signed-in sessions under this row.
+    expect(hvIsSecretSettingKey('cookies'), isTrue);
+  });
+
   test('ordinary settings are not secret', () {
     expect(hvIsSecretSettingKey(ReaderKeys.cropImages.name), isFalse);
     expect(hvIsSecretSettingKey(SyncKeys.gistGithubUsername.name), isFalse);
