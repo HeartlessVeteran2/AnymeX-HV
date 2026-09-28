@@ -168,6 +168,7 @@ class LibraryUpdateService extends GetxService {
     current.value = '';
 
     var checked = 0, newChapters = 0, failed = 0, skipped = 0;
+    var finished = false;
     final found = <HvChapterUpdate>[];
     try {
       final jobs = <_Job>[];
@@ -222,6 +223,7 @@ class LibraryUpdateService extends GetxService {
           }
         }
       }
+      finished = true;
     } catch (e) {
       Logger.e('HV: library update failed: $e');
     } finally {
@@ -234,8 +236,14 @@ class LibraryUpdateService extends GetxService {
       );
       lastResult.value = result;
       // Only a run over the whole library counts toward the auto-update
-      // interval; retrying one title or checking a selection doesn't.
-      if (types == null && onlyMediaKeys == null) {
+      // interval; retrying one title or checking a selection doesn't. A run
+      // that crashed, was cancelled or reached nothing (offline) doesn't
+      // either, so the next automatic one isn't pushed back a whole interval.
+      if (types == null &&
+          onlyMediaKeys == null &&
+          finished &&
+          !_cancelled &&
+          (checked > 0 || failed == 0)) {
         HvKeys.hvLastUpdateRunAt.set(result.finishedAt.millisecondsSinceEpoch);
       }
       current.value = '';
@@ -355,6 +363,11 @@ class LibraryUpdateService extends GetxService {
       // The details page may have re-linked the title or recorded chapters
       // since this run started; check against the saved link as it is now.
       final saved = SourceLinkRepository.get(job.type.index, job.mediaId);
+      if (saved != null && saved.isTrusted && saved.sourceId != sourceId) {
+        // Linked to another source during this run: checking this one and
+        // saving the result would undo that. The next run uses the new one.
+        return const <HvChapterUpdate>[];
+      }
       if (saved != null && saved.isTrusted) job.link = saved;
       job.link ??= await _autoLink(job);
       final link = job.link;

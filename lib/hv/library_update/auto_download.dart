@@ -27,7 +27,7 @@ class HvAutoDownload {
     if (!LibraryUpdateSettings.autoDownload || updates.isEmpty) return 0;
     if (!Get.isRegistered<DownloadController>()) return 0;
 
-    final allowedLists = LibraryUpdateSettings.autoDownloadLists;
+    final allowedLists = LibraryUpdateSettings.activeAutoDownloadLists;
     final byTitle = <String, List<HvChapterUpdate>>{};
     for (final u in updates) {
       if (u.mediaTypeIndex != ItemType.manga.index) continue;

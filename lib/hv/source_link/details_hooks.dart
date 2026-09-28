@@ -121,6 +121,11 @@ class HvDetailsHooks {
             ..knownChapterKeys = []);
       final wasConfirmed = sameTarget && existing.userConfirmed;
       final linkedAt = sameTarget ? existing.linkedAt : 0;
+      // Refreshing the same entry never lowers its score, so a trusted link
+      // can't become untrusted because one fetch matched worse.
+      final keptScore = sameTarget && existing.matchScore > score
+          ? existing.matchScore
+          : score;
       link
         ..serviceIndex = serviceIndex
         ..sourceId = sourceId
@@ -128,7 +133,7 @@ class HvDetailsHooks {
         ..url = mapped.id
         ..title = mapped.title
         ..userConfirmed = confirmed || wasConfirmed
-        ..matchScore = score
+        ..matchScore = keptScore
         ..linkedAt =
             linkedAt > 0 ? linkedAt : DateTime.now().millisecondsSinceEpoch;
 
@@ -140,6 +145,20 @@ class HvDetailsHooks {
           mediaTitle: media.title,
           poster: media.poster,
         );
+      }
+      // Recording awaited: another fetch may have saved a link meanwhile.
+      // Check the policy again against that one before overwriting it.
+      final latest = SourceLinkRepository.get(typeIndex, media.id);
+      if (latest != null &&
+          latest.serviceIndex == serviceIndex &&
+          !(latest.sourceId == sourceId && latest.url == mapped.id) &&
+          !hvShouldReplaceLink(
+            existingConfirmed: latest.userConfirmed,
+            existingTrusted: latest.isTrusted,
+            newConfirmed: confirmed,
+            newTrusted: confirmed || score >= _trustedScore,
+          )) {
+        return;
       }
       await SourceLinkRepository.save(link);
     } catch (e) {
