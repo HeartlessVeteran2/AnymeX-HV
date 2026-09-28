@@ -126,15 +126,21 @@ void main() {
 
   testWidgets('HV extension flow, phase $_phase', (tester) async {
     wakelockPlusPlatformInstance = _NoWakelock();
+    final testHandler = FlutterError.onError;
     app.main(const []);
-    // The app installs its own FlutterError handler; wrap it to count errors
-    // instead of failing on the first one.
-    await _settle(tester, 3000);
+    // The app installs its own FlutterError handler right before runApp;
+    // wrap it as soon as it's there (before the first frame builds) to count
+    // errors instead of failing on the first one.
+    final end = DateTime.now().add(const Duration(seconds: 60));
+    while (FlutterError.onError == testHandler && DateTime.now().isBefore(end)) {
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
     final appHandler = FlutterError.onError;
     FlutterError.onError = (details) {
       _errors.add(details.exceptionAsString().split('\n').first);
       appHandler?.call(details);
     };
+    await _settle(tester, 3000);
 
     final ready = await _waitFor(
         tester,
