@@ -27,7 +27,7 @@ class HvProgress {
       );
     }
     final read = m.readChapters ?? const [];
-    return HvProgress(read.isNotEmpty, [
+    return HvProgress(read.isNotEmpty || m.currentChapter != null, [
       for (final c in read)
         if (c.number != null && hvIsPageComplete(c.pageNumber, c.totalPages))
           c.number!,

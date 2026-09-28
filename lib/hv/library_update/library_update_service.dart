@@ -22,6 +22,7 @@ import 'package:anymex/hv/library_update/update_settings.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
 import 'package:anymex/hv/matching/title_normalizer.dart';
 import 'package:anymex/hv/notifications/hv_notifications.dart';
+import 'package:anymex/hv/source_link/link_merge.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -168,6 +169,7 @@ class LibraryUpdateService extends GetxService {
     current.value = '';
 
     var checked = 0, newChapters = 0, failed = 0, skipped = 0;
+    var finished = false;
     final found = <HvChapterUpdate>[];
     try {
       final jobs = <_Job>[];
@@ -222,6 +224,7 @@ class LibraryUpdateService extends GetxService {
           }
         }
       }
+      finished = true;
     } catch (e) {
       Logger.e('HV: library update failed: $e');
     } finally {
@@ -234,8 +237,14 @@ class LibraryUpdateService extends GetxService {
       );
       lastResult.value = result;
       // Only a run over the whole library counts toward the auto-update
-      // interval; retrying one title or checking a selection doesn't.
-      if (types == null && onlyMediaKeys == null) {
+      // interval; retrying one title or checking a selection doesn't. A run
+      // that crashed, was cancelled or reached nothing (offline) doesn't
+      // either, so the next automatic one isn't pushed back a whole interval.
+      if (types == null &&
+          onlyMediaKeys == null &&
+          finished &&
+          !_cancelled &&
+          (checked > 0 || failed == 0)) {
         HvKeys.hvLastUpdateRunAt.set(result.finishedAt.millisecondsSinceEpoch);
       }
       current.value = '';
@@ -355,6 +364,11 @@ class LibraryUpdateService extends GetxService {
       // The details page may have re-linked the title or recorded chapters
       // since this run started; check against the saved link as it is now.
       final saved = SourceLinkRepository.get(job.type.index, job.mediaId);
+      if (saved != null && saved.isTrusted && saved.sourceId != sourceId) {
+        // Linked to another source during this run: checking this one and
+        // saving the result would undo that. The next run uses the new one.
+        return const <HvChapterUpdate>[];
+      }
       if (saved != null && saved.isTrusted) job.link = saved;
       job.link ??= await _autoLink(job);
       final link = job.link;
@@ -380,6 +394,18 @@ class LibraryUpdateService extends GetxService {
       );
       if (record.diff.kind == ChapterDiffKind.empty) {
         throw Exception('The source returned no chapters.');
+      }
+      // The fetch awaited: the title may have been linked elsewhere, or the
+      // same link saved by the details page, meanwhile.
+      final latest = SourceLinkRepository.get(job.type.index, job.mediaId);
+      if (latest != null &&
+          latest.sourceId == link.sourceId &&
+          latest.url == link.url) {
+        hvMergeSavedLink(link, latest);
+      } else if (latest != null && latest.isTrusted) {
+        await UpdateRepository.clearError(job.mediaKey);
+        health.recordSuccess(sourceId);
+        return record.updates;
       }
       await SourceLinkRepository.save(link);
       await UpdateRepository.clearError(job.mediaKey);

@@ -59,6 +59,13 @@ class LibraryUpdateSettings {
   static set autoDownloadLists(Set<String> v) =>
       HvKeys.hvAutoDownloadLists.set(v.toList());
 
+  /// [autoDownloadLists] without lists that were deleted since. A deleted
+  /// list left selected would match no title and stop every auto-download,
+  /// while the settings screen (which only shows existing lists) shows none
+  /// selected.
+  static Set<String> get activeAutoDownloadLists =>
+      hvPruneListKeys(autoDownloadLists, _existingListKeys());
+
   /// The skip rules for a run. Included lists that were deleted are
   /// dropped, so a deleted list can't leave the run checking nothing.
   static UpdateFilterSettings get filter => UpdateFilterSettings(

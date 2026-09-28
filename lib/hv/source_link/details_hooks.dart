@@ -4,6 +4,7 @@ import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
 import 'package:anymex/hv/source_link/core/link_policy.dart';
+import 'package:anymex/hv/source_link/link_merge.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -121,6 +122,11 @@ class HvDetailsHooks {
             ..knownChapterKeys = []);
       final wasConfirmed = sameTarget && existing.userConfirmed;
       final linkedAt = sameTarget ? existing.linkedAt : 0;
+      // Refreshing the same entry never lowers its score, so a trusted link
+      // can't become untrusted because one fetch matched worse.
+      final keptScore = sameTarget && existing.matchScore > score
+          ? existing.matchScore
+          : score;
       link
         ..serviceIndex = serviceIndex
         ..sourceId = sourceId
@@ -128,7 +134,7 @@ class HvDetailsHooks {
         ..url = mapped.id
         ..title = mapped.title
         ..userConfirmed = confirmed || wasConfirmed
-        ..matchScore = score
+        ..matchScore = keptScore
         ..linkedAt =
             linkedAt > 0 ? linkedAt : DateTime.now().millisecondsSinceEpoch;
 
@@ -140,6 +146,22 @@ class HvDetailsHooks {
           mediaTitle: media.title,
           poster: media.poster,
         );
+      }
+      // Recording awaited: another fetch may have saved a link meanwhile.
+      // A different entry must pass the policy again before it's replaced;
+      // the same entry is merged, so what that fetch recorded isn't lost.
+      final latest = SourceLinkRepository.get(typeIndex, media.id);
+      if (latest != null && latest.serviceIndex == serviceIndex) {
+        if (latest.sourceId == sourceId && latest.url == mapped.id) {
+          hvMergeSavedLink(link, latest);
+        } else if (!hvShouldReplaceLink(
+          existingConfirmed: latest.userConfirmed,
+          existingTrusted: latest.isTrusted,
+          newConfirmed: confirmed,
+          newTrusted: confirmed || score >= _trustedScore,
+        )) {
+          return;
+        }
       }
       await SourceLinkRepository.save(link);
     } catch (e) {
