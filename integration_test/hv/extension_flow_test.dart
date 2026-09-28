@@ -163,8 +163,11 @@ void main() {
       await _visit(tester, 'p2_repositories', () => const SettingsExtensions());
       final installed = m.getInstalledRx(ItemType.manga).value;
       _log('installed after restart: ${installed.map((s) => s.name)}');
-      expect(repos, contains(_repo));
       _log('flutter errors: ${_errors.length} $_errors');
+      expect(repos, contains(_repo));
+      expect(installed, isNotEmpty,
+          reason: 'sources installed in phase 1 are gone');
+      expect(_errors, isEmpty, reason: 'Flutter errors while running');
       return;
     }
 
@@ -232,6 +235,7 @@ void main() {
       _log('$name search -> details -> pages: ${gotPages ? 'ok' : 'NO'}');
     }
 
+    LoadingState? readerState;
     if (libraryItem != null && librarySource != null) {
       final item = libraryItem;
       final source = librarySource;
@@ -283,6 +287,7 @@ void main() {
               'error "${reader.errorMessage}"');
           await _shot(tester, 'p1_reader_retry');
         }
+        readerState = reader.loadingState.value;
       } else {
         _log('reader: not open');
       }
@@ -301,5 +306,11 @@ void main() {
         wait: 6000);
 
     _log('flutter errors: ${_errors.length} $_errors');
+    // Checked last, so every step above is logged even when one fails.
+    expect(libraryItem, isNotNull,
+        reason: 'no source got from search to a chapter\'s pages');
+    expect(readerState, LoadingState.loaded,
+        reason: 'the reader did not load the chapter');
+    expect(_errors, isEmpty, reason: 'Flutter errors while running');
   }, timeout: const Timeout(Duration(minutes: 15)));
 }

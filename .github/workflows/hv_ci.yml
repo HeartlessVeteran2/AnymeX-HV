@@ -126,15 +126,20 @@ jobs:
           set +e
           mkdir -p runtime-results
           export HV_SHOTS="$PWD/runtime-results"
+          # Phase 2 runs even when phase 1 fails (it checks what survives a
+          # restart); the step fails at the end if either did.
+          failed=0
           for phase in 1 2; do
             xvfb-run -a -s "-screen 0 1280x800x24" \
               flutter test integration_test/hv/extension_flow_test.dart \
               -d linux --dart-define=HV_PHASE=$phase \
               2>&1 | tee "runtime-results/phase$phase.log"
             status=${PIPESTATUS[0]}
+            echo "### Phase $phase (exit $status)" >> "$GITHUB_STEP_SUMMARY"
             grep HVRESULT "runtime-results/phase$phase.log" >> "$GITHUB_STEP_SUMMARY" || true
-            if [ "$status" != 0 ]; then exit "$status"; fi
+            if [ "$status" != 0 ]; then failed=1; fi
           done
+          exit $failed
       - uses: actions/upload-artifact@v4
         if: always()
         with:
