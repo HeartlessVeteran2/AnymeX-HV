@@ -97,9 +97,14 @@ class HvReaderHooks {
     final paired = c.spreads.any((s) =>
         s.page2 != null && (s.page1?.url == url || s.page2?.url == url));
     if (!paired) return;
+    final chapter = c.currentChapter.value;
     _respread[c]?.cancel();
     _respread[c] = Timer(const Duration(milliseconds: 300), () {
-      if (c.isClosed) return;
+      if (c.isClosed ||
+          c.currentChapter.value != chapter ||
+          c.loadingState.value != LoadingState.loaded) {
+        return;
+      }
       final page = c.currentPageIndex.value;
       c.toggleDualPageMode(c.dualPageMode.value); // recomputes the spreads
       c.navigateToPage(page - 1);

@@ -567,7 +567,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           action: 'Search',
           limit: HvSourceTimeouts.perSourceSearch);
       future.then<void>((_) {}, onError: (Object _) {
-        _allSourcesCache.remove(key);
+        if (_allSourcesCache[key]?.any((i) => identical(i.future, future)) ??
+            false) {
+          _allSourcesCache.remove(key);
+        }
       });
 
       return ExtensionSearchItem(source: s, future: future);

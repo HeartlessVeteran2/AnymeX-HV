@@ -322,6 +322,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
         if (nextChapterKey.isNotEmpty) {
           loadingChapterLinks.remove(nextChapterKey);
         }
+        snackBar("The next chapter has no pages."); // HV
         return;
       }
 
@@ -351,6 +352,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       if (kDebugMode) {
         print("Error loading next chapter inline: $e");
       }
+      snackBar("Couldn't load the next chapter: $e"); // HV
     } finally {
       if (nextChapterKey.isNotEmpty) {
         loadingChapterLinks.remove(nextChapterKey);
