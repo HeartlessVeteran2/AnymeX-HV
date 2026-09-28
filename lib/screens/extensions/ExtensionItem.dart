@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:anymex/controllers/source/source_controller.dart';
+import 'package:anymex/hv/extensions/extension_error_snackbar.dart'; // HV
 import 'package:anymex/screens/extensions/ExtensionSettings/ExtensionSettings.dart';
 import 'package:anymex/utils/function.dart';
 import 'package:anymex/utils/language.dart';
@@ -47,6 +48,7 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i(e.toString());
+      hvShowExtensionError(e, widget.source.name, HvExtensionAction.install); // HV
     } finally {
       _setLoading(false);
     }
@@ -62,6 +64,7 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i(e.toString());
+      hvShowExtensionError(e, widget.source.name, HvExtensionAction.update); // HV
     } finally {
       _setLoading(false);
     }
@@ -76,6 +79,7 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
       widget.onUpdate?.call();
     } catch (e) {
       Logger.i("Uninstall Failed => ${e.toString()}");
+      hvShowExtensionError(e, widget.source.name, HvExtensionAction.uninstall); // HV
     } finally {
       _setLoading(false);
     }
