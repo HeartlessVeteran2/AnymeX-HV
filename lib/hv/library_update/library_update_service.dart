@@ -22,6 +22,7 @@ import 'package:anymex/hv/library_update/update_settings.dart';
 import 'package:anymex/hv/matching/title_matcher.dart';
 import 'package:anymex/hv/matching/title_normalizer.dart';
 import 'package:anymex/hv/notifications/hv_notifications.dart';
+import 'package:anymex/hv/source_link/link_merge.dart';
 import 'package:anymex/hv/source_link/models/hv_source_link.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/models/Media/media.dart';
@@ -393,6 +394,18 @@ class LibraryUpdateService extends GetxService {
       );
       if (record.diff.kind == ChapterDiffKind.empty) {
         throw Exception('The source returned no chapters.');
+      }
+      // The fetch awaited: the title may have been linked elsewhere, or the
+      // same link saved by the details page, meanwhile.
+      final latest = SourceLinkRepository.get(job.type.index, job.mediaId);
+      if (latest != null &&
+          latest.sourceId == link.sourceId &&
+          latest.url == link.url) {
+        hvMergeSavedLink(link, latest);
+      } else if (latest != null && latest.isTrusted) {
+        await UpdateRepository.clearError(job.mediaKey);
+        health.recordSuccess(sourceId);
+        return record.updates;
       }
       await SourceLinkRepository.save(link);
       await UpdateRepository.clearError(job.mediaKey);
