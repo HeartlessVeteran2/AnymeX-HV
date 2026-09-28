@@ -28,6 +28,7 @@ import 'package:anymex/hv/library_update/ui/updates_screen.dart';
 import 'package:anymex/hv/reader/hv_reader_launcher.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
 import 'package:anymex/main.dart' as app;
+import 'package:anymex/screens/manga/controller/reader_controller.dart';
 import 'package:anymex/screens/settings/sub_settings/settings_extensions.dart';
 import 'package:anymex/utils/function.dart';
 import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart'
@@ -144,6 +145,13 @@ void main() {
                 .any((m) => m.id == 'mangayomi'));
     _log('extension managers ready: $ready');
     expect(ready, isTrue);
+    // The bridge catches some source errors, logs them through this hook and
+    // returns an empty result; the app only shows the ones flagged `show`.
+    final appBridgeLog = AnymeXExtensionBridge.onLog;
+    AnymeXExtensionBridge.onLog = (message, show) {
+      _log('bridge log: ${message.split('\n').first}');
+      appBridgeLog(message, show);
+    };
     final em = Get.find<ExtensionManager>();
     final m = em.managers.firstWhere((m) => m.id == 'mangayomi');
     await _shot(tester, 'p${_phase}_home');
@@ -264,6 +272,25 @@ void main() {
           chapterLink: firstChapterUrl));
       await _settle(tester, 12000);
       await _shot(tester, 'p1_reader');
+      if (Get.isRegistered<ReaderController>()) {
+        final reader = Get.find<ReaderController>();
+        _log('reader: ${reader.loadingState.value.name}, '
+            '${reader.pageList.length} pages, error "${reader.errorMessage}"');
+        if (reader.loadingState.value == LoadingState.error) {
+          // The Retry button.
+          reader.retryFetchImages();
+          await _waitFor(
+              tester, () => reader.loadingState.value != LoadingState.loading,
+              timeout: const Duration(seconds: 30));
+          await _settle(tester, 3000);
+          _log('reader after retry: ${reader.loadingState.value.name}, '
+              '${reader.pageList.length} pages, '
+              'error "${reader.errorMessage}"');
+          await _shot(tester, 'p1_reader_retry');
+        }
+      } else {
+        _log('reader: not open');
+      }
       Get.back();
       await _settle(tester, 1000);
     } else {
