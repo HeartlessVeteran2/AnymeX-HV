@@ -35,6 +35,8 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
 - Settings for HV features use `HvKeys` (`lib/hv/common/hv_keys.dart`), all prefixed `hv`.
 - Pure logic (matching, diffing, filters, ...) stays free of Flutter/Isar/GetX imports so it can be
   unit-tested in `test/hv/`.
+- `HV_CHANGES.md` is the user-facing list of what this fork changes (linked from the top of
+  `README.md`). A PR that adds or fixes something a user would notice adds a line there.
 
 ## HV features (where they live)
 

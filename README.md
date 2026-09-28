@@ -1,3 +1,9 @@
+> **AnymeX-HV** is a fork of [AnymeX](https://github.com/RyanYuuki/AnymeX) by RyanYuuki.
+> It adds library, reader and discovery features from Komikku-HV and Otaku Reader, and fixes
+> several extension problems. It uses its own fork of the extension bridge,
+> [AnymeXExtensionRuntimeBridge-HV](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV).
+> **See [HV_CHANGES.md](HV_CHANGES.md) for everything this fork changes.**
+
 <div align="right">
   <details>
     <summary>🌐</summary>
