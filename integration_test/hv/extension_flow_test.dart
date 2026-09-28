@@ -126,15 +126,25 @@ void main() {
 
   testWidgets('HV extension flow, phase $_phase', (tester) async {
     wakelockPlusPlatformInstance = _NoWakelock();
+    final testHandler = FlutterError.onError;
     app.main(const []);
-    // The app installs its own FlutterError handler; wrap it to count errors
-    // instead of failing on the first one.
-    await _settle(tester, 3000);
+    // The app installs its own FlutterError handler right before runApp;
+    // wrap it as soon as it's there (before the first frame builds) to count
+    // errors instead of failing on the first one.
+    final end = DateTime.now().add(const Duration(seconds: 60));
+    while (FlutterError.onError == testHandler && DateTime.now().isBefore(end)) {
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+    // Wrapping the test's own handler would miss everything once the app
+    // installs its handler later.
+    expect(FlutterError.onError, isNot(same(testHandler)),
+        reason: 'the app did not start within 60 s');
     final appHandler = FlutterError.onError;
     FlutterError.onError = (details) {
       _errors.add(details.exceptionAsString().split('\n').first);
       appHandler?.call(details);
     };
+    await _settle(tester, 3000);
 
     final ready = await _waitFor(
         tester,
@@ -163,8 +173,11 @@ void main() {
       await _visit(tester, 'p2_repositories', () => const SettingsExtensions());
       final installed = m.getInstalledRx(ItemType.manga).value;
       _log('installed after restart: ${installed.map((s) => s.name)}');
-      expect(repos, contains(_repo));
       _log('flutter errors: ${_errors.length} $_errors');
+      expect(repos, contains(_repo));
+      expect(installed, isNotEmpty,
+          reason: 'sources installed in phase 1 are gone');
+      expect(_errors, isEmpty, reason: 'Flutter errors while running');
       return;
     }
 
@@ -232,6 +245,7 @@ void main() {
       _log('$name search -> details -> pages: ${gotPages ? 'ok' : 'NO'}');
     }
 
+    LoadingState? readerState;
     if (libraryItem != null && librarySource != null) {
       final item = libraryItem;
       final source = librarySource;
@@ -283,6 +297,7 @@ void main() {
               'error "${reader.errorMessage}"');
           await _shot(tester, 'p1_reader_retry');
         }
+        readerState = reader.loadingState.value;
       } else {
         _log('reader: not open');
       }
@@ -301,5 +316,11 @@ void main() {
         wait: 6000);
 
     _log('flutter errors: ${_errors.length} $_errors');
+    // Checked last, so every step above is logged even when one fails.
+    expect(libraryItem, isNotNull,
+        reason: 'no source got from search to a chapter\'s pages');
+    expect(readerState, LoadingState.loaded,
+        reason: 'the reader did not load the chapter');
+    expect(_errors, isEmpty, reason: 'Flutter errors while running');
   }, timeout: const Timeout(Duration(minutes: 15)));
 }

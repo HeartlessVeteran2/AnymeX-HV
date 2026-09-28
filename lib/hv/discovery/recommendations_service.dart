@@ -39,6 +39,10 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
 
   static String _cacheKey(ItemType type) => 'hvRecsCache_${type.index}';
 
+  /// Bumped by every [load], so a slower, older load can't overwrite the
+  /// cache a newer one wrote.
+  static final Map<ItemType, int> _generation = {};
+
   /// Cached results when fresh, else null.
   static List<RankedRec>? cached(ItemType type) {
     final json = KvHelper.get<Map<String, dynamic>>(_cacheKey(type),
@@ -63,6 +67,7 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
       final hit = cached(type);
       if (hit != null) return hit;
     }
+    final generation = _generation[type] = (_generation[type] ?? 0) + 1;
     final library = [
       for (final id in LibraryMembership.idsOfType(type.index))
         if (LibraryMembership.media(type.index, id) case final OfflineMedia m)
@@ -101,11 +106,14 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
         'page': 1,
       });
       final media = data?['data']?['Page']?['media'];
-      if (media is! List) {
-        // postQuery returns null (it doesn't throw) when AniList fails.
+      final errors = data?['errors'];
+      // postQuery returns null (it doesn't throw) when AniList fails, and a
+      // GraphQL error can come with partial data: use what came back, but
+      // count the batch as failed so the result isn't cached.
+      if (media is! List || (errors is List && errors.isNotEmpty)) {
         failedBatches++;
-        return;
       }
+      if (media is! List) return;
       for (final m in media) {
         final from = m['title']?['userPreferred'] as String? ?? '?';
         final nodes = m['recommendations']?['nodes'];
@@ -158,7 +166,7 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
     );
     // A partial result is shown but not cached, so the next visit retries
     // instead of keeping it for a day.
-    if (failedBatches == 0) {
+    if (failedBatches == 0 && _generation[type] == generation) {
       KvHelper.set(_cacheKey(type), {
         'at': DateTime.now().millisecondsSinceEpoch,
         'items': [for (final r in ranked.take(100)) r.toJson()],

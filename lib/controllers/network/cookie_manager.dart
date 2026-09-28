@@ -503,7 +503,7 @@ class CookieManager extends Interceptor {
   }
 
   void clearPersistentCookies() {
-    _cache?.clear();
+    _cache = {}; // HV: was _cache?.clear(); a null cache would reload the old jar
 
     _hvStore.write("{}"); // HV: was KvHelper.set
   }

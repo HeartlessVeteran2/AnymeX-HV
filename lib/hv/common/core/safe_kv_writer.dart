@@ -9,13 +9,23 @@
 ///
 /// [write] tries [writeSync]; if that fails, it queues [writeAsync], which Isar
 /// runs after the transaction in progress. The last value written always wins:
-/// while a write is queued, new values only replace what it will store.
+/// while a write is queued, new values only replace what it will store. A
+/// failed async write is retried [maxAttempts] times in all, [retryDelay]
+/// apart (doubling each time); after that the value stays in memory and the
+/// next [write] saves it.
 /// Pure, so it can be tested without Isar.
 class HvSafeKvWriter {
-  HvSafeKvWriter({required this.writeSync, required this.writeAsync});
+  HvSafeKvWriter({
+    required this.writeSync,
+    required this.writeAsync,
+    this.maxAttempts = 3,
+    this.retryDelay = const Duration(milliseconds: 200),
+  });
 
   final void Function(String value) writeSync;
   final Future<void> Function(String value) writeAsync;
+  final int maxAttempts;
+  final Duration retryDelay;
 
   String? _latest;
   Future<void>? _queued;
@@ -37,13 +47,23 @@ class HvSafeKvWriter {
   Future<void> _flush() async {
     await Future<void>.delayed(Duration.zero);
     String? written;
+    var failures = 0;
+    var delay = retryDelay;
     try {
       while (_latest != written) {
-        written = _latest;
-        await writeAsync(written!);
+        final value = _latest!;
+        try {
+          await writeAsync(value);
+          written = value;
+          failures = 0;
+          delay = retryDelay;
+        } catch (_) {
+          // Out of attempts: still in memory; the next write saves it.
+          if (++failures >= maxAttempts) return;
+          await Future<void>.delayed(delay);
+          delay *= 2;
+        }
       }
-    } catch (_) {
-      // Still in memory; the next write saves it.
     } finally {
       _queued = null;
     }

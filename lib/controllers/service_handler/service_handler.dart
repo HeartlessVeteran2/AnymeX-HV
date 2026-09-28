@@ -166,7 +166,7 @@ class ServiceHandler extends GetxController {
   @override
   void onReady() {
     super.onReady();
-    fetchHomePage();
+    fetchHomePage().catchError((Object e) => Logger.i('Home page failed: $e')); // HV
     autoLogin();
   }
 
@@ -194,7 +194,7 @@ class ServiceHandler extends GetxController {
     ServiceKeys.serviceType.set(type.index);
     serviceType.value = type;
     if (!service.isDataLoaded) {
-      fetchHomePage();
+      fetchHomePage().catchError((Object e) => Logger.i('Home page failed: $e')); // HV
     }
   }
 }
