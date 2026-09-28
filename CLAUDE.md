@@ -23,7 +23,8 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
   own `test/`; bridge tests live in `test/hv/extensions/`.
 - The Android runtime host APK / desktop jar come from the fork's releases (plugin manager,
   `RuntimeDownloader`). They are upstream's builds, copied daily by the fork's
-  `mirror-runtime-releases` workflow; a release with a higher tag published on the fork wins.
+  `mirror-runtime-releases` workflow. The app downloads the release marked Latest (`releases/latest`);
+  a release published on the fork as Latest is used until the mirror copies a newer upstream one.
 
 ## Where the fork's code lives
 

@@ -3,6 +3,11 @@
 > several extension problems. It uses its own fork of the extension bridge,
 > [AnymeXExtensionRuntimeBridge-HV](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV).
 > **See [HV_CHANGES.md](HV_CHANGES.md) for everything this fork changes.**
+>
+> The download links further down are upstream AnymeX's releases, which don't include these
+> changes. This fork has no releases yet: build it yourself, or get a debug APK from the
+> [HV CI](https://github.com/HeartlessVeteran2/AnymeX-HV/actions/workflows/hv_ci.yml) workflow
+> (Run workflow → "Also build a debug APK", then download the `anymex-hv-debug-apk` artifact).
 
 <div align="right">
   <details>
@@ -69,6 +74,9 @@
 > **By using AnymeX, you agree to comply with our [Terms of Service](./TOS.md). Please review the ToS to understand our DMCA-compliant, tracking functionality and our non-involvement with any content or services beyond AniList, MyAnimeList, and Simkl.**
 
 ## Downloads
+
+> **AnymeX-HV:** these are upstream AnymeX's builds, without this fork's changes. See the note
+> at the top of this README for how to get an AnymeX-HV build.
 
 <div align="center">
   <p>
