@@ -48,6 +48,7 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
 | Reader: page gallery, bookmarks/notes, per-series settings, download ahead, delete after read, dual page, transition | `lib/hv/reader/`, `lib/hv/bookmarks/` | `reader_controller.dart` (`HvReaderHooks.attach/detach`, `_savePreferences`, `chapterNavigator`, spread pairing), top bars, `reader_view.dart`, `tabbed_reader_settings.dart` |
 | Discover (feed, saved searches, library recommendations) | `lib/hv/discovery/` | settings sheet |
 | Backup token fix | `lib/hv/backup/secret_keys.dart` | `backup_restore_service.dart` |
+| Extension fixes: repo list after restart, install/update errors, source call timeouts | `lib/hv/extensions/` | `hv_bootstrap.dart`, `ExtensionItem.dart`, `ExtensionList.dart`, `search_view.dart`, `reader_controller.dart` (`fetchImages`) |
 
 Isar collections added: `HvSourceLink`, `HvChapterUpdate`, `HvUpdateError`, `HvPageBookmark`,
 `HvBookmarkCollection`, `HvReaderNote` (all registered in `lib/hv/hv_bootstrap.dart`).
@@ -70,10 +71,15 @@ keep it that way.
 ## CI
 
 - `.github/workflows/hv_ci.yml` — analyze `lib test` (errors fail) + `flutter test`, on PRs and
-  pushes to `claude/**`. A manual run can also build a debug APK.
+  pushes to `claude/**`. A manual run can also build a debug APK, and run the app on Linux
+  (`runtime_tests`): `integration_test/hv/extension_flow_test.dart` drives the extension path end
+  to end and uploads logs (`HVRESULT` lines) and screenshots. It needs live third-party sites, so
+  it never gates a PR. `integration_test` is added by that job, not in `pubspec.yaml`: as a dev
+  dependency its Android test libraries make R8 fail debug APK builds.
 - `.github/workflows/build.yml` — upstream release builds, on tags only.
 
 ## Branches
 
-Development happens on `claude/anymex-feature-integration-1o2rd6`; `main` is not touched
-directly.
+Work goes on branches named `claude/anymex-feature-integration-1o2rd6-<topic>`, cut from `main`,
+one small PR each so the review bots can read the diff (Sourcery stops at 150k diff characters,
+CodeAnt at 100 files). `main` is not touched directly.
