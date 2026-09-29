@@ -7,6 +7,7 @@ import 'package:anymex/hv/reader/core/dual_page.dart';
 import 'package:anymex/hv/reader/reader_downloads_service.dart';
 import 'package:anymex/hv/reader/series_settings.dart';
 import 'package:anymex/screens/manga/controller/reader_controller.dart';
+import 'package:anymex/widgets/non_widgets/snackbar.dart';
 import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -153,6 +154,20 @@ class HvReaderHooks {
 
   static void cancelTransition(ReaderController c) =>
       c.showingTransition.value = false;
+
+  static final Expando<Set<String>> _inlineFailures =
+      Expando('hvInlineFailures');
+
+  /// Shows why the next chapter couldn't be added below this one, once per
+  /// chapter while the reader is open. The reader retries every 1.5 seconds
+  /// while the end of the chapter is on screen, so a chapter that keeps
+  /// failing would otherwise show the message again and again.
+  static void reportInlineLoadFailure(
+      ReaderController c, String chapterKey, String message) {
+    if ((_inlineFailures[c] ??= <String>{}).add(chapterKey)) {
+      snackBar(message);
+    }
+  }
 
   // ---- settings -----------------------------------------------------------
 

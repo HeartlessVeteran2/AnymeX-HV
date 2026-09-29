@@ -159,7 +159,12 @@ class HvReaderDownloads {
       );
       // Keeping the last N counts back from the chapter just finished; the
       // chapter N back may never have been read (the user skipped ahead).
-      if (target == null || !_isRead(c, target)) return;
+      // The chapter just finished (keep 0) was checked above: its saved
+      // progress can still be an older visit's.
+      if (target == null ||
+          (target != chapter.number && !_isRead(c, target))) {
+        return;
+      }
       final source = Get.find<SourceController>().activeMangaSource.value;
       if (source == null || !Get.isRegistered<DownloadController>()) return;
       final downloads = Get.find<DownloadController>();
