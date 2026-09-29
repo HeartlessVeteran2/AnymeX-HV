@@ -2,6 +2,7 @@ import 'package:anymex/controllers/service_handler/params.dart';
 import 'package:anymex/controllers/service_handler/service_handler.dart';
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/database/data_keys/keys.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
 import 'package:anymex/hv/extensions/source_calls.dart'; // HV
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/screens/anime/details_page.dart';
@@ -302,7 +303,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
             query: searchQuery,
             isManga: isManga,
             filters: apiFilters.isNotEmpty ? apiFilters : null,
-            args: isAdult,
+            args: isAdult && !hvHideAdultContent(), // HV: setting wins
             page: 1,
           ))) ??
           [];
@@ -637,7 +638,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
               filters: _lastApiFilters.isNotEmpty
                   ? Map<String, dynamic>.from(_lastApiFilters)
                   : null,
-              args: isAdult,
+              args: isAdult && !hvHideAdultContent(), // HV: setting wins
               page: nextPage,
             ))) ??
             [];

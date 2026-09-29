@@ -36,6 +36,8 @@ import 'package:anymex/utils/fallback/fallback_anime.dart' as fb;
 import 'package:anymex/utils/fallback/fallback_manga.dart' as fbm;
 import 'package:anymex/utils/function.dart';
 import 'package:anymex/utils/logger.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
+import 'package:anymex/hv/common/core/adult_filter.dart'; // HV
 import 'package:anymex/widgets/common/reusable_carousel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -376,6 +378,7 @@ class AnilistData extends GetxController implements BaseService, OnlineService {
       latestMangas.value = fbm.latestMangas.removeDupes();
       topOngoingMangas.value = fbm.trendingMangas.removeDupes();
       trendingMangas.value = fbm.trendingMangas.removeDupes();
+      hvDropAdult(hvAnilistHomeLists(this)); // HV: follow Hide Adult Content
     }
   }
 
@@ -495,7 +498,8 @@ class AnilistData extends GetxController implements BaseService, OnlineService {
       Uri.parse(url),
       headers: headers,
       body: json.encode({
-        'query': query,
+        'query': hvAdultMediaQuery(query, // HV: follows Hide Adult Content
+            hideAdult: hvHideAdultContent()),
       }),
     );
 
@@ -688,7 +692,8 @@ averageScore
       Uri.parse(url),
       headers: headers,
       body: json.encode({
-        'query': query,
+        'query': hvAdultMediaQuery(query, // HV: follows Hide Adult Content
+            hideAdult: hvHideAdultContent()),
         'variables': {
           'perPage': 15,
         },
@@ -963,6 +968,13 @@ averageScore
       if (query != null && query.isNotEmpty) 'search': query,
       if (!isAdult) 'isAdult': false,
     };
+    if (!isAdult && filters != null) { // HV: adult tags only with adult results
+      filters = hvWithoutAdultTags(
+          filters,
+          ((isManga ? _cachedMangaFilterData : _cachedAnimeFilterData)?[
+                  'hvAdultTags'] as List<String>?) ??
+              const []);
+    }
 
     if (filters != null) {
       if (filters['isAdult'] == true) {
@@ -1237,6 +1249,7 @@ averageScore
 
     List<String> genres = [];
     List<String> tags = [];
+    List<String> hvAdultTags = []; // HV: offered when adult search is on
     List<Map<String, dynamic>> streamingServices = [];
     List<String> formats = [];
     List<String> statuses = [];
@@ -1329,6 +1342,10 @@ averageScore
                 .map<String>((t) => t['name'] as String)
                 .toList()
               ..sort();
+            hvAdultTags = tagList // HV
+                .where((t) => t['isAdult'] == true)
+                .map<String>((t) => t['name'] as String)
+                .toList();
           }
 
           final linkSources = data['ExternalLinkSourceCollection'] as List?;
@@ -1461,6 +1478,7 @@ averageScore
     final result = {
       'genres': genres.isNotEmpty ? genres : fallbackGenres,
       'tags': tags,
+      'hvAdultTags': hvAdultTags, // HV
       'streamingServices': streamingServices,
       'formats': formats.isNotEmpty ? formats : fallbackFormats,
       'statuses': statuses.isNotEmpty ? statuses : fallbackStatuses,

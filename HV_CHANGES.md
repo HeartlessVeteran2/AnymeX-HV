@@ -151,6 +151,18 @@ fixed up in the PRs listed under *Other fixes*.
   request, so an update check or a search across all sources stacked them up. It now shows at
   most once a minute per site.
   [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
+- **Adult content follows one setting,** Settings → Common → "Hide Adult Content" (on by
+  default). Its description used to talk about a prompt that doesn't exist. Now:
+  - on: search, the home page and the calendar leave 18+ titles out. Before, the AniList home
+    page's popular and trending lists, the manga lists and the placeholder lists shown before
+    they load could still show them;
+  - off: they're shown on the home page (AniList and MyAnimeList) and in the calendar, and
+    search gets an "Adult" button. With that button on, the tag filter also lists adult tags;
+    with it off, adult tags picked earlier are left out of the search.
+
+  Changing the setting reloads the home page. Turning it on also takes 18+ titles off the AniList
+  home page straight away, so they don't stay up when the reload fails (offline).
+  [#27](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/27)
 
 ## Test builds
 
