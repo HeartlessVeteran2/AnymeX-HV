@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:anymex/hv/common/core/adult_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,6 +68,53 @@ void main() {
           ['Action', 'Magic']);
       expect(hvSearchTags(['Action', 'Magic'], ['Ahegao'], showAdult: true),
           ['Action', 'Ahegao', 'Magic']);
+    });
+  });
+
+  group('hvWithoutAdultTags', () {
+    test('drops adult tags and keeps the rest', () {
+      expect(
+          hvWithoutAdultTags({
+            'tags': ['Magic', 'Ahegao'],
+            'sort': ['POPULARITY_DESC'],
+          }, ['Ahegao']),
+          {
+            'tags': ['Magic'],
+            'sort': ['POPULARITY_DESC'],
+          });
+    });
+
+    test('no tags left becomes no tag filter', () {
+      expect(hvWithoutAdultTags({'tags': ['Ahegao']}, ['Ahegao']),
+          {'tags': null});
+    });
+
+    test('filters without tags are returned as they were', () {
+      final filters = {'genres': ['Action']};
+      expect(hvWithoutAdultTags(filters, ['Ahegao']), same(filters));
+    });
+  });
+
+  group('adult titles in the bundled fallback lists', () {
+    test('are recognised by id', () {
+      expect(hvIsAdultFallback('98543'), isTrue);
+      expect(hvIsAdultFallback('21'), isFalse);
+      expect(hvIsAdultFallback('not a number'), isFalse);
+    });
+
+    test('are all still in the fallback data', () {
+      // Tests run from the project root. If upstream replaces the fallback
+      // lists, this list needs checking against AniList again.
+      final data = [
+        'lib/utils/fallback/fallback_anime.dart',
+        'lib/utils/fallback/fallback_manga.dart',
+      ].map((f) => File(f).readAsStringSync()).join();
+      final ids = RegExp(r'"id":\s*(\d+)')
+          .allMatches(data)
+          .map((m) => int.parse(m.group(1)!))
+          .toSet();
+      expect(ids.containsAll(hvAdultFallbackIds), isTrue,
+          reason: 'missing: ${hvAdultFallbackIds.difference(ids)}');
     });
   });
 }

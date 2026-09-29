@@ -447,6 +447,10 @@ class _FuturisticFilterSheetState extends State<FuturisticFilterSheet> {
               (data['tags'] as List<String>?) ?? [],
               (data['hvAdultTags'] as List<String>?) ?? [],
               showAdult: hvAdultSearchOn());
+          if (!hvAdultSearchOn()) { // HV: nor kept selected without it
+            selectedTags.removeWhere(
+                ((data['hvAdultTags'] as List<String>?) ?? const []).contains);
+          }
 
           final allFormats = (data['formats'] as List<String>?) ?? [];
           animeFormats = allFormats

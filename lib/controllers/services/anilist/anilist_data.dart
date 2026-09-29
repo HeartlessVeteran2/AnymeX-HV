@@ -378,6 +378,10 @@ class AnilistData extends GetxController implements BaseService, OnlineService {
       latestMangas.value = fbm.latestMangas.removeDupes();
       topOngoingMangas.value = fbm.trendingMangas.removeDupes();
       trendingMangas.value = fbm.trendingMangas.removeDupes();
+      hvDropAdultFallback([ // HV: fallback lists follow Hide Adult Content
+        upcomingAnimes, popularAnimes, trendingAnimes, latestAnimes,
+        popularMangas, latestMangas, topOngoingMangas, trendingMangas,
+      ]);
     }
   }
 
@@ -967,6 +971,13 @@ averageScore
       if (query != null && query.isNotEmpty) 'search': query,
       if (!isAdult) 'isAdult': false,
     };
+    if (!isAdult && filters != null) { // HV: adult tags only with adult results
+      filters = hvWithoutAdultTags(
+          filters,
+          ((isManga ? _cachedMangaFilterData : _cachedAnimeFilterData)?[
+                  'hvAdultTags'] as List<String>?) ??
+              const []);
+    }
 
     if (filters != null) {
       if (filters['isAdult'] == true) {

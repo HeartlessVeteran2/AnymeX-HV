@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:anymex/controllers/service_handler/service_handler.dart';
 import 'package:anymex/database/data_keys/keys.dart';
+import 'package:anymex/hv/common/core/adult_filter.dart';
+import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/utils/logger.dart';
 import 'package:get/get.dart';
 
@@ -20,4 +22,14 @@ void hvOnHideAdultContentChanged() {
   if (!Get.isRegistered<ServiceHandler>()) return;
   unawaited(Get.find<ServiceHandler>().fetchHomePage().catchError(
       (Object e) => Logger.i('Reloading home after adult setting: $e')));
+}
+
+/// Removes the 18+ titles from the home page's bundled fallback [lists]
+/// while "Hide Adult Content" is on. They show until the first load from
+/// AniList replaces them, and stay if that load fails.
+void hvDropAdultFallback(Iterable<RxList<Media>> lists) {
+  if (!hvHideAdultContent()) return;
+  for (final list in lists) {
+    list.removeWhere((m) => hvIsAdultFallback(m.id));
+  }
 }
