@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       build_apk:
-        description: "Also build a debug APK"
+        description: "Also build APKs (debug and release, arm64)"
         type: boolean
         default: false
       runtime_tests:
@@ -60,9 +60,17 @@ jobs:
       - name: Test
         run: flutter test
 
+  # Both install next to upstream AnymeX as "AnymeX HV" (com.ryan.anymex.hv)
+  # and are signed with the committed test key (android/hv-test.keystore),
+  # so a new build installs over the last one. Release runs like the real
+  # app; debug is slower but shows full error details.
   build-apk:
     if: github.event_name == 'workflow_dispatch' && inputs.build_apk
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [debug, release]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -74,6 +82,9 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+      # Stub API clients only: .env is packed into the APK, and artifacts of a
+      # public repository can be downloaded by anyone, so real tracker keys
+      # would be public. AniList's "token" login works without them.
       - name: Stub .env
         run: |
           printf 'AL_CLIENT_ID=0\nAL_CLIENT_SECRET=0\nSIMKL_CLIENT_ID=0\nSIMKL_CLIENT_SECRET=0\nMAL_CLIENT_ID=0\nMAL_CLIENT_SECRET=0\nCALLBACK_SCHEME=anymex://callback\nCOMMENTS_BASE_URL=https://whzwmfxngelicmjyxwmr.supabase.co/functions/v1\n' > .env
@@ -81,14 +92,16 @@ jobs:
       # Debug builds carry the debug engine for every ABI and Jetifier runs
       # out of the default 4G heap on them; arm64 only, with more heap on
       # the CI runner (the committed gradle.properties is unchanged).
-      - name: Build debug APK (arm64)
+      - name: Build ${{ matrix.mode }} APK (arm64)
+        env:
+          HV_TEST_BUILD: "true" # sign release with the test key (build.gradle)
         run: |
           sed -i 's/-Xmx4G/-Xmx6G/' android/gradle.properties
-          flutter build apk --debug --target-platform android-arm64
+          flutter build apk --${{ matrix.mode }} --target-platform android-arm64
       - uses: actions/upload-artifact@v4
         with:
-          name: anymex-hv-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: anymex-hv-${{ matrix.mode }}-apk
+          path: build/app/outputs/flutter-apk/app-${{ matrix.mode }}.apk
 
   # Runs the real app under a virtual display and drives the extension path
   # end to end (repos, installing Mangayomi sources, search -> details ->
