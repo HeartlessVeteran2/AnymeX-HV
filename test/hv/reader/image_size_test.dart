@@ -43,6 +43,32 @@ void main() {
     expect(imageCache.liveImageCount, 0);
   });
 
+  test('disposing its own copy leaves the image usable for everyone else',
+      () async {
+    // Each listener gets its own clone of the decoded image and must
+    // dispose it; the pixels are shared until every clone is disposed.
+    final provider = image('c.png', _png);
+    final shown = Completer<ImageInfo>();
+    provider
+        .resolve(ImageConfiguration.empty)
+        .addListener(ImageStreamListener((info, _) => shown.complete(info)));
+    final sized = Completer<void>();
+    hvReportImageSize(provider, (_, __) => sized.complete());
+    await sized.future.timeout(const Duration(seconds: 10));
+
+    final other = await shown.future;
+    expect(other.image.debugDisposed, isFalse);
+    // A page built afterwards still gets the image from the cache.
+    ImageInfo? later;
+    provider
+        .resolve(ImageConfiguration.empty)
+        .addListener(ImageStreamListener((info, _) => later = info));
+    expect(later?.image.debugDisposed, isFalse);
+    expect(later?.image.width, 3);
+    other.dispose();
+    later?.dispose();
+  });
+
   test('a listener left on the stream keeps the image alive (the leak)',
       () async {
     final done = Completer<void>();
