@@ -1,4 +1,5 @@
 import 'package:anymex/hv/extensions/extension_error_snackbar.dart'; // HV
+import 'package:anymex/hv/extensions/extension_queue.dart'; // HV
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/utils/language.dart';
 import 'package:anymex/utils/theme_extensions.dart';
@@ -589,11 +590,13 @@ class _ExtensionListState extends State<ExtensionList>
       final futures = updateEntries.map((source) async {
         final id = source.id?.toString();
         if (id != null) {
+          if (sourceController.updatingSourceIds.contains(id)) return; // HV: tapped twice
           sourceController.updatingSourceIds.add(id);
         }
         try {
           final manager = getSourceManager(source);
-          await manager.updateSource(source);
+          await hvRunExtensionAction( // HV: one APK install at a time
+              source, () => manager.updateSource(source));
           await sourceController.refreshSourceState(source);
         } catch (e) {
           debugPrint('Error updating extension ${source.name}: $e');
