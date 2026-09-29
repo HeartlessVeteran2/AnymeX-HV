@@ -125,6 +125,14 @@ fixed up in the PRs listed under *Other fixes*.
   [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
 - **Startup:** a failed AniList home page load at startup is now handled.
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
+- **Performance:** the image cache is measured at every start (to keep it under its size
+  limit). That walk now runs in the background instead of on the UI thread, which could stutter
+  the first seconds after launch with a large cache.
+  [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
+- **Cloudflare message:** "Detected Cloudflare protection" showed once for every blocked
+  request, so an update check or a search across all sources stacked them up. It now shows at
+  most once a minute per site.
+  [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
 
 ## Testing
 

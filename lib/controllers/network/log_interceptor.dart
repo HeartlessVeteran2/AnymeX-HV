@@ -1,3 +1,4 @@
+import 'package:anymex/hv/common/cloudflare_notice.dart'; // HV
 import 'package:anymex/utils/function.dart';
 import 'package:anymex/widgets/common/cloudflare_webview.dart';
 import 'package:anymex/widgets/non_widgets/snackbar.dart';
@@ -42,7 +43,8 @@ class LogInterceptor extends Interceptor {
         ["cloudflare-nginx", "cloudflare"]
             .contains(response.headerMap['server']?.toLowerCase());
 
-    if (cloudflare) {
+    if (cloudflare &&
+        hvShouldShowCloudflareNotice(response.request.url)) { // HV: once a minute per site
       snackBar(
         '⚠️ Detected Cloudflare protection (Tap to solve)',
         title: 'Cloudflare',
