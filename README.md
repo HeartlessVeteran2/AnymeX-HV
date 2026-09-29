@@ -162,7 +162,9 @@ Join our communities to stay updated and contribute to the discussion:
 
 > **AnymeX-HV:** the fork's own code lives in `lib/hv/`, and upstream files only get small hooks
 > marked `// HV:`. [CLAUDE.md](CLAUDE.md) lists where each feature lives, and
-> `scripts/hv/setup_env.sh` sets up a build.
+> `scripts/hv/setup_env.sh` sets up a build. The Discord, Telegram and issue links below are
+> upstream's: ask about AnymeX-HV in [this repository's issues](https://github.com/HeartlessVeteran2/AnymeX-HV/issues)
+> and open its pull requests here.
 
 We welcome contributions, from translations to new features.  
 Our development environment setup guide is available [here](./DEVELOPMENT.md).  
