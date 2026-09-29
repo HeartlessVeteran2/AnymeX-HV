@@ -5,9 +5,10 @@
 > **See [HV_CHANGES.md](HV_CHANGES.md) for everything this fork changes.**
 >
 > The download links further down are upstream AnymeX's releases, which don't include these
-> changes. This fork has no releases yet: build it yourself, or get a debug APK from the
+> changes. This fork has no releases yet: build it yourself, or get a test APK from the
 > [HV CI](https://github.com/HeartlessVeteran2/AnymeX-HV/actions/workflows/hv_ci.yml) workflow
-> (Run workflow → "Also build a debug APK", then download the `anymex-hv-debug-apk` artifact).
+> (Run workflow → "Also build APKs", then download the `anymex-hv-release-apk` artifact, or
+> `anymex-hv-debug-apk` for full error details). It installs as **AnymeX HV**, next to AnymeX.
 
 <div align="right">
   <details>

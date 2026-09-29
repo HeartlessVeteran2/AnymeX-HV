@@ -33,7 +33,8 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-    <application android:label="AnymeX" 
+    <!-- HV: the label comes from hvAppLabel in android/app/build.gradle -->
+    <application android:label="${hvAppLabel}" 
         android:name="${applicationName}" 
         android:roundIcon="@mipmap/ic_rounded_launcher" 
         android:icon="@mipmap/ic_launcher"

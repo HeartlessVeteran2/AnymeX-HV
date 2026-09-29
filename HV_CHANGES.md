@@ -126,6 +126,22 @@ fixed up in the PRs listed under *Other fixes*.
 - **Startup:** a failed AniList home page load at startup is now handled.
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
 
+## Test builds
+
+- **Test APKs install next to AnymeX.** They are named "AnymeX HV" (app ID
+  `com.ryan.anymex.hv`), so you can keep the original app and its data.
+- **Each test APK installs over the previous one.** They are signed with a test key kept in this
+  repository (`android/hv-test.keystore`), so updating doesn't need an uninstall. The key is
+  public: it's only for test builds, never for a release shared with others.
+- **Release and debug APKs.** The release APK runs at full speed; the debug one is slower but
+  shows full error details.
+- Both apps answer `anymex://` links (adding a repository, the tracker login callback). If
+  Android asks which app to open, pick AnymeX HV.
+- Logging in to MAL, Simkl, or AniList through the browser needs API clients of your own, set
+  as repository secrets (`AL_CLIENT_ID`, `AL_CLIENT_SECRET`, `MAL_CLIENT_ID`,
+  `MAL_CLIENT_SECRET`, `SIMKL_CLIENT_ID`, `SIMKL_CLIENT_SECRET`). AniList's "token" login
+  works without them.
+
 ## Testing
 
 - Unit tests for the fork's code are in `test/hv/`. `.github/workflows/hv_ci.yml` runs them,
