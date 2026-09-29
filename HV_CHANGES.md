@@ -23,6 +23,10 @@ Each change below links to the pull request that made it.
   (upstream #583, #515). The error is now shown, along with how to fix it.
   [#4](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/4),
   [#16](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/16)
+- **"Update all" could crash the app with APK extensions** (Mihon/Aniyomi). They were all
+  installed at once, which the installer can't handle. APK, CloudStream and Kotatsu extensions
+  now install, update and uninstall one at a time; tapping "Update all" twice no longer starts
+  every update again.
 - **Source searches and page loads could spin forever or show "No results"** (upstream #524,
   #591). They now time out with a readable error, and failed searches aren't cached.
   [#5](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/5)
