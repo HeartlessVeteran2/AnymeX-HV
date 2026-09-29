@@ -28,14 +28,22 @@ void main() {
       expect(RegExp(r'isAdult: false').allMatches(q), hasLength(2));
       expect(q, contains('media(isAdult: false, type: ANIME, sort'));
       // The `isAdult` field that is read back is left alone.
-      expect(q, contains('{ id isAdult }'));
+      expect(q, contains('id isAdult }'));
     });
 
     test('showing drops every fixed filter', () {
       final q = hvAdultMediaQuery(_home, hideAdult: false);
       expect(q, isNot(contains('isAdult:')));
-      expect(q, contains('{ id isAdult }'));
+      expect(q, contains('id isAdult }'));
       expect(q, contains('countryOfOrigin: "JP"'));
+    });
+
+    test('every list reads back isAdult, either way', () {
+      for (final hide in [true, false]) {
+        final q = hvAdultMediaQuery(_home, hideAdult: hide);
+        expect(RegExp(r'\) \{ isAdult').allMatches(q), hasLength(2),
+            reason: 'hideAdult: $hide');
+      }
     });
 
     test('a field whose name only contains "media" is not touched', () {
@@ -100,6 +108,13 @@ void main() {
       expect(hvIsAdultFallback('98543'), isTrue);
       expect(hvIsAdultFallback('21'), isFalse);
       expect(hvIsAdultFallback('not a number'), isFalse);
+    });
+
+    test('count as adult home titles, as do titles AniList flags', () {
+      expect(hvIsAdultTitle('98543'), isTrue);
+      expect(hvIsAdultTitle('21', isAdult: true), isTrue);
+      expect(hvIsAdultTitle('21', isAdult: false), isFalse);
+      expect(hvIsAdultTitle('21'), isFalse);
     });
 
     test('are all still in the fallback data', () {

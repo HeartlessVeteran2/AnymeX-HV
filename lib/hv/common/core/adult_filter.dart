@@ -4,11 +4,18 @@
 /// `isAdult` filter is dropped, so adult and other titles both come back
 /// (AniList returns both when the filter is left out).
 ///
+/// Each list also returns its titles' `isAdult`, so titles already on screen
+/// can be dropped when hiding is turned on (see [hvIsAdultTitle]). Asking for
+/// a field twice is allowed in GraphQL.
+///
 /// Only for queries whose `media(` fields are `Page.media` lists, which take
 /// an `isAdult` argument. GraphQL ignores commas, so a comma left behind by a
 /// removed argument is harmless.
 String hvAdultMediaQuery(String query, {required bool hideAdult}) {
-  final open = query.replaceAll(RegExp(r'isAdult:\s*(true|false)'), '');
+  final open = query
+      .replaceAll(RegExp(r'isAdult:\s*(true|false)'), '')
+      .replaceAllMapped(
+          RegExp(r'\bmedia\([^()]*\)\s*\{'), (m) => '${m[0]} isAdult');
   if (!hideAdult) return open;
   return open.replaceAll(RegExp(r'\bmedia\('), 'media(isAdult: false, ');
 }
@@ -52,3 +59,8 @@ const hvAdultFallbackIds = {
 /// Whether a fallback title with this [id] is 18+.
 bool hvIsAdultFallback(String id) =>
     hvAdultFallbackIds.contains(int.tryParse(id));
+
+/// Whether a home-list title is 18+: AniList flagged it ([isAdult]), or it is
+/// one of the fallback titles, which carry no flag.
+bool hvIsAdultTitle(String id, {bool? isAdult}) =>
+    isAdult == true || hvIsAdultFallback(id);

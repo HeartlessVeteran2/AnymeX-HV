@@ -160,7 +160,8 @@ fixed up in the PRs listed under *Other fixes*.
     search gets an "Adult" button. With that button on, the tag filter also lists adult tags;
     with it off, adult tags picked earlier are left out of the search.
 
-  Changing the setting reloads the home page.
+  Changing the setting reloads the home page. Turning it on also takes 18+ titles off the AniList
+  home page straight away, so they don't stay up when the reload fails (offline).
   [#27](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/27)
 
 ## Test builds

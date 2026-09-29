@@ -378,10 +378,7 @@ class AnilistData extends GetxController implements BaseService, OnlineService {
       latestMangas.value = fbm.latestMangas.removeDupes();
       topOngoingMangas.value = fbm.trendingMangas.removeDupes();
       trendingMangas.value = fbm.trendingMangas.removeDupes();
-      hvDropAdultFallback([ // HV: fallback lists follow Hide Adult Content
-        upcomingAnimes, popularAnimes, trendingAnimes, latestAnimes,
-        popularMangas, latestMangas, topOngoingMangas, trendingMangas,
-      ]);
+      hvDropAdult(hvAnilistHomeLists(this)); // HV: follow Hide Adult Content
     }
   }
 
