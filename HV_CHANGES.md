@@ -139,6 +139,24 @@ fixed up in the PRs listed under *Other fixes*.
   most once a minute per site.
   [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
 
+## Test builds
+
+- **Test APKs install next to AnymeX.** They are named "AnymeX HV" (app ID
+  `com.ryan.anymex.hv`), so you can keep the original app and its data.
+- **Each test APK installs over the previous one.** They are signed with a test key kept in this
+  repository (`android/hv-test.keystore`), so updating doesn't need an uninstall. The key is
+  public: it's only for test builds, never for a release shared with others. A release build
+  uses it only when CI marks it as a test build; any other release build needs a real key.
+- **Release and debug APKs.** The release APK runs at full speed; the debug one is slower but
+  shows full error details.
+- Both apps answer `anymex://` links (adding a repository, the tracker login callback). If
+  Android asks which app to open, pick AnymeX HV.
+- **Tracker logins:** use AniList's "token" login. Logging in through the browser (AniList) and
+  MAL or Simkl logins need API keys, which would be packed into the APK; test APKs are public
+  downloads, so they don't carry any.
+
+[#24](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/24)
+
 ## Testing
 
 - Unit tests for the fork's code are in `test/hv/`. `.github/workflows/hv_ci.yml` runs them,

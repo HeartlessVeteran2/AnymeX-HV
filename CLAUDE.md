@@ -82,6 +82,15 @@ keep it that way.
   to end and uploads logs (`HVRESULT` lines) and screenshots. It needs live third-party sites, so
   it never gates a PR. `integration_test` is added by that job, not in `pubspec.yaml`: as a dev
   dependency its Android test libraries make R8 fail debug APK builds.
+- Test APKs (`build_apk` input) are built in debug and release, arm64. The app ID is
+  `com.ryan.anymex.hv` (`applicationIdSuffix` in `android/app/build.gradle`, plus a matching
+  client in `google-services.json`) so it installs next to upstream AnymeX, labelled "AnymeX HV".
+  Debug builds are signed with the committed test key `android/hv-test.keystore` (password
+  `hvtest`), so each build installs over the last. Release builds use it only when
+  `HV_TEST_BUILD=true` (set by the CI job) and there's no `key.properties`; otherwise they need
+  a real key, as upstream's do. The key is public: never ship a release signed with it.
+  Their `.env` has stub API clients only: `.env` is packed into the APK and artifacts of a
+  public repository are downloadable by anyone, so real tracker keys must not go there.
 - `.github/workflows/build.yml` — upstream release builds, on tags only.
 
 ## Branches

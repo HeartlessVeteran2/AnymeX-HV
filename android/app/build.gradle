@@ -31,6 +31,9 @@ android {
 
     defaultConfig {
         applicationId = "com.ryan.anymex"
+        // HV: installs next to upstream AnymeX, as "AnymeX HV"
+        applicationIdSuffix = ".hv"
+        manifestPlaceholders += [hvAppLabel: "AnymeX HV"]
         minSdkVersion = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -59,11 +62,25 @@ android {
             storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
             storePassword keystoreProperties['storePassword']
         }
+        // HV: test builds are signed with this key, committed to the repo, so
+        // each one installs over the last. It's public: never sign a release
+        // meant for others with it.
+        hvTest {
+            storeFile rootProject.file('hv-test.keystore')
+            storePassword 'hvtest'
+            keyAlias 'hvtest'
+            keyPassword 'hvtest'
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.release
+            // HV: the public test key only for HV CI test builds
+            // (HV_TEST_BUILD=true); otherwise key.properties, as upstream.
+            signingConfig = !rootProject.file('key.properties').exists() &&
+                    System.getenv('HV_TEST_BUILD') == 'true'
+                    ? signingConfigs.hvTest
+                    : signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -72,7 +89,7 @@ android {
         debug {
             // minifyEnabled false
             // shrinkResources false
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.hvTest // HV: was signingConfigs.debug
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
