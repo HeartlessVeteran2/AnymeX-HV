@@ -2,7 +2,24 @@
 > It adds library, reader and discovery features from Komikku-HV and Otaku Reader, and fixes
 > several extension problems. It uses its own fork of the extension bridge,
 > [AnymeXExtensionRuntimeBridge-HV](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV).
-> **See [HV_CHANGES.md](HV_CHANGES.md) for everything this fork changes.**
+> **See [HV_CHANGES.md](HV_CHANGES.md) for everything this fork changes.** In short:
+>
+> - **Extensions:** the repository list survives a restart; failed installs, updates and
+>   removals say why; "Update all" no longer crashes with APK extensions; searches and page
+>   loads time out with a readable error instead of spinning forever; "No pages found" caused by
+>   saving website cookies is fixed; Mangayomi sources get the settings they were missing.
+> - **Library:** new chapter checks, with Updates and Update errors screens, notifications and
+>   automatic downloads; saved source links; filters, grouping, hidden lists, search syntax and
+>   multi-select; chapter list filters and mark-as-read.
+> - **Reader:** page gallery; page bookmarks and notes; per-series settings; download ahead and
+>   delete after reading; two-page mode fixes; a chapter transition page; downloaded chapters no
+>   longer pile up in memory in continuous mode.
+> - **Discover:** a feed of sources and saved searches, and recommendations for your library.
+> - **Backups:** login tokens and signed-in site cookies stay out unless you include auth tokens.
+> - **Stability:** the update checker can't get stuck as "running"; the startup cache check runs
+>   in the background; the Cloudflare warning shows once per site instead of once per request.
+> - **Test builds:** install as "AnymeX HV" next to AnymeX and update in place, in release and
+>   debug versions.
 >
 > The download links further down are upstream AnymeX's releases, which don't include these
 > changes. This fork has no releases yet: build it yourself, or get a debug APK from the
@@ -116,6 +133,8 @@
 
 ## Support Us
 
+> **AnymeX-HV:** this supports upstream AnymeX and its developer, RyanYuuki.
+
 <a href='https://ko-fi.com/ryanyuuki7' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 > [!TIP]
@@ -130,6 +149,9 @@
 
 ## Official Communities
 
+> **AnymeX-HV:** these are upstream AnymeX's communities. They don't support this fork; report
+> problems with AnymeX-HV in this repository instead.
+
 Join our communities to stay updated and contribute to the discussion:
 
 <a href="https://discord.gg/GKVvSyXDUD" style="margin-right: 10px; display: inline-block;"><img src="https://files.catbox.moe/tb0004.png" alt="Discord" height="40" style="vertical-align: middle;"></a>
@@ -137,6 +159,10 @@ Join our communities to stay updated and contribute to the discussion:
 <a href="https://www.reddit.com/r/AnymeX_/" style="display: inline-block;"><img src="https://cdn3.iconfinder.com/data/icons/2018-social-media-black-and-white-logos/1000/2018_social_media_popular_app_logo_reddit-1024.png" alt="Reddit" height="40" style="vertical-align: middle;"></a>
 
 ## Contribute
+
+> **AnymeX-HV:** the fork's own code lives in `lib/hv/`, and upstream files only get small hooks
+> marked `// HV:`. [CLAUDE.md](CLAUDE.md) lists where each feature lives, and
+> `scripts/hv/setup_env.sh` sets up a build.
 
 We welcome contributions, from translations to new features.  
 Our development environment setup guide is available [here](./DEVELOPMENT.md).  
@@ -173,3 +199,5 @@ Your efforts are invaluable.
 ## License
 
 AnymeX is licensed under the MIT License. More info can be found [here](LICENSE.md).
+
+> **AnymeX-HV:** the fork's changes are under the same MIT License.
