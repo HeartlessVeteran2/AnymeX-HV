@@ -23,7 +23,11 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
   (`hvBridgeRepo` in `lib/hv/extensions/bridge_repo.dart`), pinned by commit in `pubspec.yaml`
   for both `anymex_extension_runtime_bridge` and `libtorrent_flutter`. Fix bridge bugs there
   (small PR on the fork), then bump both `ref:`s and run `flutter pub get`. The fork ignores its
-  own `test/`; bridge tests live in `test/hv/extensions/`.
+  own `test/`; bridge tests live in `test/hv/extensions/`. `bridge_fixes_test.dart` opens a
+  real Isar store for the bridge's settings, with the Linux library from
+  `isar_community_flutter_libs`, and mocks its platform channels and HTTP client. To try a
+  bridge change before pushing it, point the dependency at a local clone (`path:`) and don't
+  commit that.
 - The Android runtime host APK / desktop jar come from the fork's releases (plugin manager,
   `RuntimeDownloader`). They are upstream's builds, copied daily by the fork's
   `mirror-runtime-releases` workflow. The app downloads the release marked Latest (`releases/latest`);

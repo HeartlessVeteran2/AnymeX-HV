@@ -9,9 +9,12 @@ import 'package:get/get.dart';
 ///
 /// The bridge's Mangayomi manager saves its repos under
 /// `'<managerId><type>Repos'` and reads them back to fetch extensions, but
-/// only fills the list the Repositories screen shows (`getReposRx`) when a
-/// repo is added or removed. So after a restart the screen says "No
-/// repositories yet" while the extensions from those repos keep working.
+/// used to fill the list the Repositories screen shows (`getReposRx`) only
+/// when a repo was added or removed. So after a restart the screen said "No
+/// repositories yet" while the extensions from those repos kept working.
+/// Our bridge fork now fills it when the manager loads
+/// (AnymeXExtensionRuntimeBridge-HV#5); this stays as a fallback for any
+/// manager that doesn't.
 ///
 /// This fills any *empty* list from the stored value. Lists a manager already
 /// filled itself are left alone, and add/remove keep working as before

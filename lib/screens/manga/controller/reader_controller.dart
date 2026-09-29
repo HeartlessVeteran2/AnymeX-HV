@@ -31,6 +31,7 @@ import '../../../models/reader/tap_zones.dart';
 import '../../../repositories/tap_zone_repository.dart';
 import 'package:anymex/hv/reader/reader_hooks.dart'; // HV
 import 'package:anymex/hv/extensions/source_calls.dart'; // HV
+import 'package:anymex/hv/extensions/extension_errors.dart'; // HV
 import 'package:anymex/hv/reader/series_settings.dart'; // HV
 
 enum LoadingState { loading, loaded, error }
@@ -354,7 +355,8 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
         print("Error loading next chapter inline: $e");
       }
       HvReaderHooks.reportInlineLoadFailure( // HV: once per chapter
-          this, nextChapterKey, "Couldn't load the next chapter: $e");
+          this, nextChapterKey,
+          "Couldn't load the next chapter: ${hvPageLoadErrorMessage(e)}");
     } finally {
       if (nextChapterKey.isNotEmpty) {
         loadingChapterLinks.remove(nextChapterKey);
@@ -1859,6 +1861,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
 
   Future<void> fetchImages(String url, {bool initialAtBottom = false}) async {
     final curChapter = currentChapter.value;
+    final hvLoad = HvReaderHooks.beginPageLoad(this); // HV: a newer load wins
     _isNavigating = true;
     _resetOverscroll();
     WidgetsBinding.instance.addPostFrameCallback((_) => _initTracking());
@@ -1896,6 +1899,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
             action: 'Loading pages',
             limit: HvSourceTimeouts.pages);
       }
+      if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
       if (data.isNotEmpty) {
         pageList.assignAll(data);
         loadingState.value = LoadingState.loaded;
@@ -1937,10 +1941,12 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       }
     } catch (e) {
       Logger.i('Error fetching images: ${e.toString()}');
+      if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
       loadingState.value = LoadingState.error;
-      errorMessage.value = e.toString();
+      errorMessage.value = hvPageLoadErrorMessage(e); // HV: one short line
     } finally {
       Future.delayed(const Duration(milliseconds: 200), () {
+        if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
         _isNavigating = false;
         _syncAvailability();
       });
