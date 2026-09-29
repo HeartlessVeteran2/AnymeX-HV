@@ -124,13 +124,13 @@ class HvReaderDownloads {
     }
   }
 
-  /// Whether chapter [number] of the open title is read, by its saved
-  /// progress (else the reader's chapter list).
+  /// Whether chapter [number] of the open title is read: finished in its
+  /// saved progress or in the reader's chapter list (this session's).
   static bool _isRead(ReaderController c, double number) {
     final saved = LibraryMembership.media(ItemType.manga.index, c.media.id)
             ?.readChapters ??
         const <Chapter>[];
-    return hvIsChapterRead([
+    return hvIsNumberRead([
       for (final ch in [...saved, ...c.chapterList])
         (
           link: ch.link,
@@ -138,7 +138,7 @@ class HvReaderDownloads {
           page: ch.pageNumber,
           total: ch.totalPages,
         ),
-    ], number: number);
+    ], number);
   }
 
   static Future<void> _deleteAfterRead(
@@ -161,8 +161,7 @@ class HvReaderDownloads {
       // chapter N back may never have been read (the user skipped ahead).
       // The chapter just finished (keep 0) was checked above: its saved
       // progress can still be an older visit's.
-      if (target == null ||
-          (target != chapter.number && !_isRead(c, target))) {
+      if (target == null || (target != chapter.number && !_isRead(c, target))) {
         return;
       }
       final source = Get.find<SourceController>().activeMangaSource.value;

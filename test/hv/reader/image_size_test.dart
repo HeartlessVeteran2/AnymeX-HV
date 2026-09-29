@@ -28,8 +28,7 @@ void main() {
 
   // Each test clears the image cache before counting live images: the cache
   // lets an image go, and a listener left on its stream still keeps it.
-  test('reports the size once, then no longer keeps the image alive',
-      () async {
+  test('reports the size once, then no longer keeps the image alive', () async {
     final sizes = <Size>[];
     final done = Completer<void>();
     hvReportImageSize(image('a.png', _png), (w, h) {
@@ -83,15 +82,15 @@ void main() {
     expect(imageCache.liveImageCount, 1);
   });
 
-  test('an image that fails to decode is still reported, and let go',
-      () async {
+  test('an image that fails to decode is still reported, and let go', () async {
     final errors = <FlutterErrorDetails>[];
     final previous = FlutterError.onError;
     FlutterError.onError = errors.add;
     addTearDown(() => FlutterError.onError = previous);
 
     var reported = false;
-    hvReportImageSize(image('bad.png', [1, 2, 3, 4]), (_, __) => reported = true);
+    hvReportImageSize(
+        image('bad.png', [1, 2, 3, 4]), (_, __) => reported = true);
     for (var i = 0; i < 200 && errors.isEmpty; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
