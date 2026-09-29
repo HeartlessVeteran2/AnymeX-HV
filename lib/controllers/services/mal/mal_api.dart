@@ -7,6 +7,8 @@ import 'package:anymex/models/Anilist/anilist_profile.dart';
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/utils/function.dart';
 import 'package:anymex/utils/logger.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
+import 'package:anymex/hv/common/core/adult_filter.dart'; // HV
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -53,7 +55,9 @@ class MalApi {
 
   Future<List<Media>> fetchRanking(String url, {String? customFields}) async {
     final newField = customFields ?? _defaultFields;
-    final data = await request('$url&$newField') as Map<String, dynamic>?;
+    final data = await request( // HV: 18+ entries follow Hide Adult Content
+        '${hvAdultMalUrl(url, hideAdult: hvHideAdultContent())}&$newField')
+        as Map<String, dynamic>?;
     if (data == null || data['data'] == null) return [];
     final isManga = url.contains('/manga/');
     return (data['data'] as List<dynamic>)

@@ -6,6 +6,7 @@ import 'package:anymex/controllers/services/anilist/anilist_error_handler.dart';
 import 'package:anymex/database/data_keys/keys.dart';
 import 'package:anymex/models/Media/media.dart';
 import 'package:anymex/utils/logger.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
 import 'package:get/get.dart';
 
 const String url = 'https://graphql.anilist.co';
@@ -78,7 +79,9 @@ Future<void> fetchCalendarData(RxList<Media> callbackData,
         .map<Media?>((schedule) {
           final media =
               Media.fromSmallJson(schedule['media'], false, isMal: isMAL);
-          if (media.isAdult ?? false) return null;
+          if ((media.isAdult ?? false) && hvHideAdultContent()) { // HV
+            return null;
+          }
           return media
             ..nextAiringEpisode = NextAiringEpisode(
                 airingAt: schedule['airingAt'],

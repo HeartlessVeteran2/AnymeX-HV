@@ -4,6 +4,7 @@ import 'package:anymex/controllers/service_handler/service_handler.dart';
 import 'package:anymex/controllers/services/community_service.dart';
 import 'package:anymex/controllers/settings/settings.dart';
 import 'package:anymex/database/data_keys/keys.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
 import 'package:anymex/widgets/common/anymex_scaffold.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_dialog.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_section_builder.dart';
@@ -81,14 +82,15 @@ class _SettingsCommonState extends State<SettingsCommon> {
                         AnymeXTile.toggle(
                           icon: Icons.play_disabled_rounded,
                           title: 'Hide Adult Content',
-                          subtitle:
-                              'If enabled, you will not get a prompt for enabling adult content on Anilist/MyAnimeList.',
+                          subtitle: // HV: what the switch actually does
+                              'Hides 18+ titles from search, the home page and the calendar. Turn it off to see them, and to get an Adult filter in search.',
                           value: hideAdultContent,
                           onChanged: (e) {
                             setState(() {
                               hideAdultContent = e;
                               General.hideAdultContent.set(e);
                             });
+                            hvOnHideAdultContentChanged(); // HV
                           },
                         ),
                         Obx(() => AnymeXTile.toggle(

@@ -1,4 +1,6 @@
 import 'package:anymex/controllers/services/anilist/anilist_data.dart';
+import 'package:anymex/hv/common/adult_content.dart'; // HV
+import 'package:anymex/hv/common/core/adult_filter.dart'; // HV
 import 'package:anymex/screens/search/widgets/search_filter_selector.dart';
 import 'package:anymex/utils/theme_extensions.dart';
 import 'package:flutter/material.dart';
@@ -441,7 +443,10 @@ class _FuturisticFilterSheetState extends State<FuturisticFilterSheet> {
       if (mounted) {
         setState(() {
           genres = (data['genres'] as List<String>?) ?? [];
-          allTags = (data['tags'] as List<String>?) ?? [];
+          allTags = hvSearchTags( // HV: adult tags with adult search on
+              (data['tags'] as List<String>?) ?? [],
+              (data['hvAdultTags'] as List<String>?) ?? [],
+              showAdult: hvAdultSearchOn());
 
           final allFormats = (data['formats'] as List<String>?) ?? [];
           animeFormats = allFormats
