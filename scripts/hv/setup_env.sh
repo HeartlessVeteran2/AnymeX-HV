@@ -9,10 +9,24 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 if [ ! -x "$FLUTTER_DIR/bin/flutter" ]; then
   echo "Installing Flutter $FLUTTER_VERSION to $FLUTTER_DIR"
+  # Flutter publishes Linux archives for x64 only, macOS ones for x64 and arm64.
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64) archive="linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" ;;
+    Darwin-arm64) archive="macos/flutter_macos_arm64_${FLUTTER_VERSION}-stable.zip" ;;
+    Darwin-x86_64) archive="macos/flutter_macos_${FLUTTER_VERSION}-stable.zip" ;;
+    *)
+      echo "No Flutter archive for $(uname -s) $(uname -m): install Flutter $FLUTTER_VERSION" \
+        "yourself and run again with FLUTTER_DIR set to it." >&2
+      exit 1
+      ;;
+  esac
   tmp="$(mktemp -d)"
-  curl -sSL -o "$tmp/flutter.tar.xz" \
-    "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz"
-  tar -xf "$tmp/flutter.tar.xz" -C "$(dirname "$FLUTTER_DIR")"
+  curl -fsSL -o "$tmp/${archive##*/}" \
+    "https://storage.googleapis.com/flutter_infra_release/releases/stable/$archive"
+  case "$archive" in
+    *.zip) unzip -q "$tmp/${archive##*/}" -d "$(dirname "$FLUTTER_DIR")" ;;
+    *) tar -xf "$tmp/${archive##*/}" -C "$(dirname "$FLUTTER_DIR")" ;;
+  esac
   rm -rf "$tmp"
   git config --global --add safe.directory "$FLUTTER_DIR" || true
 fi
