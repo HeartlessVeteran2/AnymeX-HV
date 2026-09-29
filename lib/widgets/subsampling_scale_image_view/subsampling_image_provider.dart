@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:anymex/controllers/services/storage/anymex_cache_manager.dart';
 import 'package:anymex/widgets/anymex_widgets/anymex_progress.dart';
+import 'package:anymex/hv/reader/image_size.dart'; // HV
 import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.dart';
 import 'package:extended_image/extended_image.dart' as ext;
 import 'package:anymex/utils/image_cropper.dart';
@@ -98,12 +99,9 @@ class _SubsamplingImageProviderState extends State<SubsamplingImageProvider> {
       } else {
         final file = File(url);
         if (file.existsSync()) {
-          final imageStream =
-              FileImage(file).resolve(const ImageConfiguration());
-          imageStream.addListener(ImageStreamListener((info, _) {
-            widget.onImageLoaded?.call(
-                info.image.width.toDouble(), info.image.height.toDouble());
-          }));
+          // HV: was a listener added on every build and never removed, which
+          // kept every local page decoded in memory (see hvReportImageSize).
+          hvReportImageSize(FileImage(file), widget.onImageLoaded);
           return Image.file(
             file,
             width: widget.width,
@@ -161,15 +159,8 @@ class _SubsamplingImageProviderState extends State<SubsamplingImageProvider> {
         } else {
           final file = File(url);
           if (file.existsSync()) {
-            if (widget.onImageLoaded != null) {
-              // HV: wide pages; same as the local-file path above.
-              FileImage(file)
-                  .resolve(const ImageConfiguration())
-                  .addListener(ImageStreamListener((info, _) {
-                widget.onImageLoaded?.call(
-                    info.image.width.toDouble(), info.image.height.toDouble());
-              }));
-            }
+            // HV: wide pages; same as the local-file path above.
+            hvReportImageSize(FileImage(file), widget.onImageLoaded);
             return Image.file(
               file,
               width: widget.width,

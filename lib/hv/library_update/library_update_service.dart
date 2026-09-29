@@ -7,6 +7,7 @@ import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/common/media_key.dart';
 import 'package:anymex/hv/common/network_conditions.dart';
+import 'package:anymex/hv/common/safe_kv.dart';
 import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/library_update/auto_download.dart';
 import 'package:anymex/hv/library_update/chapter_recorder.dart';
@@ -245,7 +246,11 @@ class LibraryUpdateService extends GetxService {
           finished &&
           !_cancelled &&
           (checked > 0 || failed == 0)) {
-        HvKeys.hvLastUpdateRunAt.set(result.finishedAt.millisecondsSinceEpoch);
+        // Never throws: a sync write fails while an async one (e.g. the
+        // reader saving progress) runs, and throwing here would skip the
+        // reset below and leave every later run refused as "running".
+        hvSafeSet(HvKeys.hvLastUpdateRunAt.name,
+            result.finishedAt.millisecondsSinceEpoch);
       }
       current.value = '';
       running.value = false;

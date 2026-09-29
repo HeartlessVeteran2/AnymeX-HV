@@ -21,4 +21,19 @@ void main() {
     expect(hvIsChapterRead(saved, link: '/other', number: 1), isTrue);
     expect(hvIsChapterRead(saved, number: 3), isFalse);
   });
+
+  test('a chapter is read when any copy of it is finished', () {
+    final chapters = <HvSavedChapter>[
+      // An older visit's saved progress comes first...
+      (link: '/a/5', number: 5, page: 3, total: 20),
+      // ...and this session finished it (or another source's copy).
+      (link: '/b/5', number: 5, page: 20, total: 20),
+      (link: '/a/6', number: 6, page: 2, total: 20),
+    ];
+    expect(hvIsNumberRead(chapters, 5), isTrue);
+    // The first match alone would say unread.
+    expect(hvIsChapterRead(chapters, number: 5), isFalse);
+    expect(hvIsNumberRead(chapters, 6), isFalse);
+    expect(hvIsNumberRead(chapters, 7), isFalse);
+  });
 }

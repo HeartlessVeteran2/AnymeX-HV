@@ -34,3 +34,12 @@ bool hvIsChapterRead(
   }
   return match != null && hvIsPageComplete(match.page, match.total);
 }
+
+/// Whether any copy of chapter [number] in [chapters] is finished.
+///
+/// A chapter can appear several times (one entry per source or scanlation,
+/// the saved progress and the reader's own list); one copy that is behind,
+/// such as an older visit's saved progress, doesn't make it unread.
+bool hvIsNumberRead(Iterable<HvSavedChapter> chapters, double number) =>
+    chapters
+        .any((c) => c.number == number && hvIsPageComplete(c.page, c.total));

@@ -93,10 +93,12 @@ fixed up in the PRs listed under *Other fixes*.
   - the unread count and anime progress were wrong;
   - stale links were still followed;
   - a failed or cancelled run still pushed back the next automatic check;
-  - titles re-linked during a run were overwritten.
+  - titles re-linked during a run were overwritten;
+  - a check could stay stuck as "running" until the app was restarted.
 
   [#8](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/8),
-  [#17](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/17)
+  [#17](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/17),
+  [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
 - **Library:**
   - renaming a list broke update and auto-download list choices;
   - deleted lists stopped auto-download;
@@ -107,14 +109,20 @@ fixed up in the PRs listed under *Other fixes*.
 - **Reader:**
   - color filter blend modes;
   - wide pages in two-page mode, on Android and Linux;
-  - "keep last N" deleted unread chapters;
-  - a failed next chapter now shows a message.
+  - "keep last N" deleted unread chapters, and "keep last 0" sometimes kept the chapter just
+    finished;
+  - a failed next chapter now shows a message, once;
+  - reading downloaded chapters in continuous mode kept every page in memory until the app
+    closed, which could crash it on long chapters (an upstream bug).
 
   [#10](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/10),
-  [#16](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/16)
-- **Recommendations:** a failed load was cached as "no recommendations" for 24 hours.
+  [#16](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/16),
+  [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
+- **Recommendations:** a failed load was cached as "no recommendations" for 24 hours, and saving
+  the results could turn a successful load into an error.
   [#12](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/12),
-  [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
+  [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18),
+  [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
 - **Startup:** a failed AniList home page load at startup is now handled.
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
 

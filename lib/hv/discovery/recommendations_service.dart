@@ -1,6 +1,7 @@
 import 'package:anymex/controllers/services/anilist/anilist_api.dart';
 import 'package:anymex/database/isar_models/offline_media.dart';
 import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/safe_kv.dart';
 import 'package:anymex/hv/discovery/core/rec_ranking.dart';
 import 'package:anymex/hv/library/library_membership.dart';
 import 'package:anymex/hv/source_link/source_link_repository.dart';
@@ -166,8 +167,9 @@ query ($ids: [Int], $malIds: [Int], $type: MediaType, $page: Int) {
     );
     // A partial result is shown but not cached, so the next visit retries
     // instead of keeping it for a day.
+    // hvSafeSet: saving the cache can't fail a load that worked.
     if (failedBatches == 0 && _generation[type] == generation) {
-      KvHelper.set(_cacheKey(type), {
+      hvSafeSet(_cacheKey(type), {
         'at': DateTime.now().millisecondsSinceEpoch,
         'items': [for (final r in ranked.take(100)) r.toJson()],
       });

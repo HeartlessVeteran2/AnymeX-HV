@@ -13,6 +13,9 @@ features ported from two Kotlin manga readers (Komikku-HV and Otaku Reader), re-
   Settings are `KeyValue` rows written through enum keys (`lib/database/data_keys/keys.dart`,
   `lib/database/kv_helper.dart`: `SomeKeys.key.get<T>(default)` / `.set(v)`). The enum value's
   `name` is the stored key, so key names must be unique across all enums.
+- A sync Isar write (`KvHelper.set`, `writeTxnSync`) throws while an async one (`writeTxn`) runs,
+  and upstream saves reading progress asynchronously. HV code that saves in the background or in
+  cleanup code uses `hvSafeSet` (`lib/hv/common/safe_kv.dart`), which falls back to an async write.
 - Navigation: `navigate(() => Page())` from `lib/utils/function.dart`.
 - Extensions come from `anymex_extension_runtime_bridge` (git dependency); sources expose
   `search`, `getDetail`, `getPageList`, `getLatestUpdates`, ...
