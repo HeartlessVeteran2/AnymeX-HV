@@ -30,6 +30,7 @@ import 'package:anymex_extension_runtime_bridge/anymex_extension_runtime_bridge.
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:anymex/utils/background_service_handler.dart';
 import 'package:anymex/widgets/non_widgets/snackbar.dart';
+import 'package:anymex/hv/extensions/extension_errors.dart'; // HV
 
 class DownloadController extends GetxController {
   final RxList<ActiveDownloadTask> activeTasks = <ActiveDownloadTask>[].obs;
@@ -1058,7 +1059,7 @@ class DownloadController extends GetxController {
       await _onForegroundMangaTaskFinished(task, pages.length);
     } catch (e) {
       task.status = MangaDownloadStatus.failed;
-      task.errorMessage = e.toString();
+      task.errorMessage = hvPageLoadErrorMessage(e); // HV: one short line
       snackBar('Download failed: ${task.chapterDisplay}');
     } finally {
       activeMangaTasks.refresh();

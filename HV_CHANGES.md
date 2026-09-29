@@ -40,7 +40,7 @@ Each change below links to the pull request that made it.
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
 - **"No pages found" didn't say why.** When a source failed to load a chapter, the extension
   bridge dropped the error and returned no pages. Our bridge fork now passes the error on, and
-  the reader shows it in one line, for example "No connection".
+  the reader and failed downloads show it in one line, for example "No connection".
   [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 - **The app uses our own fork of the extension bridge,**
   [AnymeXExtensionRuntimeBridge-HV](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV).

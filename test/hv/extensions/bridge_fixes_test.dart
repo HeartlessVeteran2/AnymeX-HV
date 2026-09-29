@@ -40,6 +40,7 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   late Directory dir;
+  late Isar isar;
   String? skip;
 
   setUpAll(() async {
@@ -50,7 +51,7 @@ void main() {
     }
     await Isar.initializeIsarCore(libraries: {Abi.current(): library});
     dir = Directory.systemTemp.createTempSync('hv_bridge');
-    final isar = await Isar.open([KvEntrySchema],
+    isar = await Isar.open([KvEntrySchema],
         directory: dir.path, name: 'hv_bridge_test');
     AnymeXExtensionBridge.context = BridgeContext(
       isar: isar,
@@ -61,8 +62,10 @@ void main() {
     );
   });
 
-  tearDownAll(() {
-    if (skip == null) dir.deleteSync(recursive: true);
+  tearDownAll(() async {
+    if (skip != null) return;
+    await isar.close();
+    dir.deleteSync(recursive: true);
   });
 
   test('Mangayomi shows its saved repos again after a restart', () async {
