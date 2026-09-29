@@ -142,6 +142,8 @@ fixed up in the PRs listed under *Other fixes*.
   `MAL_CLIENT_SECRET`, `SIMKL_CLIENT_ID`, `SIMKL_CLIENT_SECRET`). AniList's "token" login
   works without them.
 
+[#24](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/24)
+
 ## Testing
 
 - Unit tests for the fork's code are in `test/hv/`. `.github/workflows/hv_ci.yml` runs them,
