@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:anymex/controllers/source/source_controller.dart';
 import 'package:anymex/hv/extensions/extension_error_snackbar.dart'; // HV
+import 'package:anymex/hv/extensions/extension_queue.dart'; // HV
 import 'package:anymex/screens/extensions/ExtensionSettings/ExtensionSettings.dart';
 import 'package:anymex/utils/function.dart';
 import 'package:anymex/utils/language.dart';
@@ -44,7 +45,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
     _setLoading(true);
     var hvDone = false; // HV
     try {
-      await widget.source.install();
+      await hvRunExtensionAction( // HV: one APK install at a time
+          widget.source, () => widget.source.install());
       hvDone = true; // HV: a failed refresh afterwards isn't a failed install
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
@@ -66,7 +68,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
     var hvDone = false; // HV
     try {
       final manager = getSourceManager(widget.source);
-      await manager.updateSource(widget.source);
+      await hvRunExtensionAction( // HV: one APK install at a time
+          widget.source, () => manager.updateSource(widget.source));
       hvDone = true; // HV: a failed refresh afterwards isn't a failed update
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
@@ -87,7 +90,8 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
     var hvDone = false; // HV
     try {
       Logger.i("Uninstalling => ${widget.source.id}");
-      await widget.source.uninstall();
+      await hvRunExtensionAction( // HV: one APK install at a time
+          widget.source, () => widget.source.uninstall());
       hvDone = true; // HV: a failed refresh afterwards isn't a failed remove
       await sourceController.refreshSourceState(widget.source);
       widget.onUpdate?.call();
