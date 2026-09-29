@@ -1,4 +1,5 @@
 import 'package:anymex/hv/extensions/extension_errors.dart';
+import 'package:anymex/hv/extensions/source_calls.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 String msg(Object e, {HvExtensionAction a = HvExtensionAction.install}) =>
@@ -77,6 +78,41 @@ void main() {
           startsWith("Couldn't update 1 extension: A."));
       expect(hvUpdateFailuresMessage(['A', 'B', 'C', 'D', 'E']),
           startsWith("Couldn't update 5 extensions: A, B, C and 2 more."));
+    });
+  });
+
+  group('hvPageLoadErrorMessage', () {
+    test('offline', () {
+      expect(
+          hvPageLoadErrorMessage(
+              Exception('ClientException with SocketException: Failed host lookup')),
+          'No connection. Check your internet and try again.');
+    });
+
+    test('our own readable errors are shown in full', () {
+      for (final e in [
+        const HvSourceTimeoutException('Loading pages', Duration(seconds: 60)),
+        const HvNoSourceException(),
+      ]) {
+        expect(hvPageLoadErrorMessage(e), e.toString());
+      }
+    });
+
+    test("keeps the reader's own message as it was", () {
+      expect(
+          hvPageLoadErrorMessage(Exception('No pages found for this chapter')),
+          'No pages found for this chapter');
+    });
+
+    test('a long error over several lines becomes one short line', () {
+      final message = hvPageLoadErrorMessage(
+          'SourceCodeException: Fatal parsing errors for the direct source:\n'
+          "- Expected to find ';'. (ligne 1, colonne 1)\n"
+          "- Expected to find ';'. (ligne 1, colonne 6)");
+      expect(message,
+          'SourceCodeException: Fatal parsing errors for the direct source:');
+      expect(
+          hvPageLoadErrorMessage('x' * 500), hasLength(lessThanOrEqualTo(140)));
     });
   });
 }

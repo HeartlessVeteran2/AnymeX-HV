@@ -14,6 +14,10 @@ final _hostQueue = HvSerialQueue();
 /// crashed the app. Those, and the other extensions the runtime host loads
 /// (CloudStream, Kotatsu), now run one at a time; Mangayomi, Sora and
 /// Legado extensions are plain downloads and still run in parallel.
+///
+/// Our bridge fork now also runs APK installs and removals one at a time
+/// itself (AnymeXExtensionRuntimeBridge-HV#5). This queue stays, because it
+/// covers CloudStream and Kotatsu too.
 Future<T> hvRunExtensionAction<T>(Source source, Future<T> Function() action) =>
     source is ASource || source is CloudStreamSource || source is KotatsuSource
         ? _hostQueue.run(action)

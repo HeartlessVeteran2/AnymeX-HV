@@ -17,8 +17,10 @@ Each change below links to the pull request that made it.
 ## Extension fixes
 
 - **The repository list was empty after restarting the app** (upstream issue #585). The
-  extensions still worked. The list now reloads from storage.
-  [#3](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/3)
+  extensions still worked. The list now reloads from storage. The cause, in the extension
+  bridge, is fixed in our bridge fork too.
+  [#3](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/3),
+  [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 - **Installing, updating or removing an extension silently did nothing when it failed**
   (upstream #583, #515). The error is now shown, along with how to fix it.
   [#4](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/4),
@@ -26,8 +28,9 @@ Each change below links to the pull request that made it.
 - **"Update all" could crash the app with APK extensions** (Mihon/Aniyomi). They were all
   installed at once, which the installer can't handle. APK, CloudStream and Kotatsu extensions
   now install, update and uninstall one at a time; tapping "Update all" twice no longer starts
-  every update again.
-  [#22](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/22)
+  every update again. Our bridge fork now also runs APK installs one at a time itself.
+  [#22](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/22),
+  [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 - **Source searches and page loads could spin forever or show "No results"** (upstream #524,
   #591). They now time out with a readable error, and failed searches aren't cached.
   [#5](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/5)
@@ -35,13 +38,20 @@ Each change below links to the pull request that made it.
   cookies clashed with other database writes and made the page request fail.
   [#14](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/14),
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
+- **"No pages found" didn't say why.** When a source failed to load a chapter, the extension
+  bridge dropped the error and returned no pages. Our bridge fork now passes the error on, and
+  the reader shows it in one line, for example "No connection".
+  [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 - **The app uses our own fork of the extension bridge,**
   [AnymeXExtensionRuntimeBridge-HV](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV).
   The runtime APK/JAR and the torrent engine also come from it. The fork passes Mangayomi
-  sources the settings they were missing (API URL, date format). See its
+  sources the settings they were missing (API URL, date format), and fixes three of the bugs
+  above at their source: the repository list after a restart, the APK install crash, and page
+  errors being hidden. See its
   [HV_CHANGES.md](https://github.com/HeartlessVeteran2/AnymeXExtensionRuntimeBridge-HV/blob/main/HV_CHANGES.md).
   [#15](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/15),
-  [#19](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/19)
+  [#19](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/19),
+  [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 
 ## Added features
 

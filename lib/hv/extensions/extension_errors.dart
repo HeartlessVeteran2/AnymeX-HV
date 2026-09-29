@@ -85,6 +85,21 @@ String _shorten(String message, {int max = 140}) {
       : '${firstLine.substring(0, max - 1)}…';
 }
 
+/// Turns an error from loading a chapter's pages into one short line for the
+/// reader.
+///
+/// Our bridge fork now passes on why a source couldn't load the pages; before,
+/// it returned no pages and the reader could only say "No pages found". The
+/// raw error can be a long dump over several lines, so only its first line is
+/// shown.
+String hvPageLoadErrorMessage(Object error) {
+  final raw = _clean(error.toString());
+  if (_isOffline(raw.toLowerCase())) {
+    return 'No connection. Check your internet and try again.';
+  }
+  return _shorten(raw);
+}
+
 /// The message after "Update all", or null when everything updated.
 String? hvUpdateFailuresMessage(List<String> failedNames) {
   if (failedNames.isEmpty) return null;

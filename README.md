@@ -7,7 +7,8 @@
 > - **Extensions:** the repository list survives a restart; failed installs, updates and
 >   removals say why; "Update all" no longer crashes with APK extensions; searches and page
 >   loads time out with a readable error instead of spinning forever; "No pages found" caused by
->   saving website cookies is fixed; Mangayomi sources get the settings they were missing.
+>   saving website cookies is fixed, and a chapter that fails to load says why; Mangayomi sources
+>   get the settings they were missing.
 > - **Library:** new chapter checks, with Updates and Update errors screens, notifications and
 >   automatic downloads; saved source links; filters, grouping, hidden lists, search syntax and
 >   multi-select; chapter list filters and mark-as-read.
