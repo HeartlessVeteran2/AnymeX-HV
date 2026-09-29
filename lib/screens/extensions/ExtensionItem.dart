@@ -64,6 +64,12 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
 
   Future<void> _handleUpdate() async {
     if (_isLoading) return;
+    // HV: marked as updating, so "Update all" doesn't queue it again
+    final hvId = widget.source.id?.toString();
+    if (hvId != null) {
+      if (sourceController.updatingSourceIds.contains(hvId)) return;
+      sourceController.updatingSourceIds.add(hvId);
+    }
     _setLoading(true);
     var hvDone = false; // HV
     try {
@@ -81,6 +87,7 @@ class _ExtensionListTileWidgetState extends State<ExtensionListTileWidget> {
         widget.onUpdate?.call(); // HV: the list still changed
       }
     } finally {
+      if (hvId != null) sourceController.updatingSourceIds.remove(hvId); // HV
       _setLoading(false);
     }
   }
