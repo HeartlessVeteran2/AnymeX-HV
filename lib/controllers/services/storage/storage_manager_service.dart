@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:anymex/controllers/services/storage/anymex_cache_manager.dart';
+import 'package:anymex/hv/common/dir_size.dart'; // HV
 import 'package:anymex/database/data_keys/keys.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:anymex/main.dart';
@@ -156,20 +157,9 @@ class StorageManagerService {
   }
 
   Future<int> _computeDirectorySize(Directory directory) async {
-    int total = 0;
-    try {
-      if (await directory.exists()) {
-        await for (final entity
-            in directory.list(recursive: true, followLinks: false)) {
-          if (entity is File) {
-            try {
-              total += await entity.length();
-            } catch (_) {}
-          }
-        }
-      }
-    } catch (_) {}
-    return total;
+    // HV: counted on a background isolate; this walk ran at every startup,
+    // one awaited file lookup at a time on the UI isolate.
+    return hvDirectorySize(directory.path);
   }
 
   Future<List<Directory>> _getAllKnownCacheDirectories() async {

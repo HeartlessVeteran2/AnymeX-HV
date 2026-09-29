@@ -23,6 +23,11 @@ Each change below links to the pull request that made it.
   (upstream #583, #515). The error is now shown, along with how to fix it.
   [#4](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/4),
   [#16](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/16)
+- **"Update all" could crash the app with APK extensions** (Mihon/Aniyomi). They were all
+  installed at once, which the installer can't handle. APK, CloudStream and Kotatsu extensions
+  now install, update and uninstall one at a time; tapping "Update all" twice no longer starts
+  every update again.
+  [#22](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/22)
 - **Source searches and page loads could spin forever or show "No results"** (upstream #524,
   #591). They now time out with a readable error, and failed searches aren't cached.
   [#5](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/5)
@@ -125,6 +130,14 @@ fixed up in the PRs listed under *Other fixes*.
   [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
 - **Startup:** a failed AniList home page load at startup is now handled.
   [#18](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/18)
+- **Performance:** the image cache is measured at every start (to keep it under its size
+  limit). That walk now runs in the background instead of on the UI thread, which could stutter
+  the first seconds after launch with a large cache.
+  [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
+- **Cloudflare message:** "Detected Cloudflare protection" showed once for every blocked
+  request, so an update check or a search across all sources stacked them up. It now shows at
+  most once a minute per site.
+  [#23](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/23)
 
 ## Test builds
 
