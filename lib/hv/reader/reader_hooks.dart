@@ -164,6 +164,9 @@ class HvReaderHooks {
   /// failing would otherwise show the message again and again.
   static void reportInlineLoadFailure(
       ReaderController c, String chapterKey, String message) {
+    // A page load can take up to a minute, so it may fail after the reader
+    // closed; the message would then show over another screen.
+    if (c.isClosed) return;
     if ((_inlineFailures[c] ??= <String>{}).add(chapterKey)) {
       snackBar(message);
     }
