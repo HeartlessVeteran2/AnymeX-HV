@@ -85,8 +85,10 @@ keep it that way.
 - Test APKs (`build_apk` input) are built in debug and release, arm64. The app ID is
   `com.ryan.anymex.hv` (`applicationIdSuffix` in `android/app/build.gradle`, plus a matching
   client in `google-services.json`) so it installs next to upstream AnymeX, labelled "AnymeX HV".
-  Debug builds, and release builds without a `key.properties`, are signed with the committed
-  test key `android/hv-test.keystore` (password `hvtest`), so each build installs over the last.
+  Debug builds are signed with the committed test key `android/hv-test.keystore` (password
+  `hvtest`), so each build installs over the last. Release builds use it only when
+  `HV_TEST_BUILD=true` (set by the CI job) and there's no `key.properties`; otherwise they need
+  a real key, as upstream's do. The key is public: never ship a release signed with it.
   `.env` comes from repository secrets when they're set, else stubs.
 - `.github/workflows/build.yml` — upstream release builds, on tags only.
 

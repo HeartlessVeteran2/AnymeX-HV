@@ -132,7 +132,8 @@ fixed up in the PRs listed under *Other fixes*.
   `com.ryan.anymex.hv`), so you can keep the original app and its data.
 - **Each test APK installs over the previous one.** They are signed with a test key kept in this
   repository (`android/hv-test.keystore`), so updating doesn't need an uninstall. The key is
-  public: it's only for test builds, never for a release shared with others.
+  public: it's only for test builds, never for a release shared with others. A release build
+  uses it only when CI marks it as a test build; any other release build needs a real key.
 - **Release and debug APKs.** The release APK runs at full speed; the debug one is slower but
   shows full error details.
 - Both apps answer `anymex://` links (adding a repository, the tracker login callback). If

@@ -106,6 +106,8 @@ jobs:
       # out of the default 4G heap on them; arm64 only, with more heap on
       # the CI runner (the committed gradle.properties is unchanged).
       - name: Build ${{ matrix.mode }} APK (arm64)
+        env:
+          HV_TEST_BUILD: "true" # sign release with the test key (build.gradle)
         run: |
           sed -i 's/-Xmx4G/-Xmx6G/' android/gradle.properties
           flutter build apk --${{ matrix.mode }} --target-platform android-arm64

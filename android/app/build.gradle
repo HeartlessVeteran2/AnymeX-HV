@@ -75,10 +75,12 @@ android {
 
     buildTypes {
         release {
-            // HV: the test key when there's no key.properties
-            signingConfig = rootProject.file('key.properties').exists()
-                    ? signingConfigs.release
-                    : signingConfigs.hvTest
+            // HV: the public test key only for HV CI test builds
+            // (HV_TEST_BUILD=true); otherwise key.properties, as upstream.
+            signingConfig = !rootProject.file('key.properties').exists() &&
+                    System.getenv('HV_TEST_BUILD') == 'true'
+                    ? signingConfigs.hvTest
+                    : signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
