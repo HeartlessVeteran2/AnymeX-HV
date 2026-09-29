@@ -138,10 +138,9 @@ fixed up in the PRs listed under *Other fixes*.
   shows full error details.
 - Both apps answer `anymex://` links (adding a repository, the tracker login callback). If
   Android asks which app to open, pick AnymeX HV.
-- Logging in to MAL, Simkl, or AniList through the browser needs API clients of your own, set
-  as repository secrets (`AL_CLIENT_ID`, `AL_CLIENT_SECRET`, `MAL_CLIENT_ID`,
-  `MAL_CLIENT_SECRET`, `SIMKL_CLIENT_ID`, `SIMKL_CLIENT_SECRET`). AniList's "token" login
-  works without them.
+- **Tracker logins:** use AniList's "token" login. Logging in through the browser (AniList) and
+  MAL or Simkl logins need API keys, which would be packed into the APK; test APKs are public
+  downloads, so they don't carry any.
 
 [#24](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/24)
 

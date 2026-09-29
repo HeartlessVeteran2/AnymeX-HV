@@ -89,7 +89,8 @@ keep it that way.
   `hvtest`), so each build installs over the last. Release builds use it only when
   `HV_TEST_BUILD=true` (set by the CI job) and there's no `key.properties`; otherwise they need
   a real key, as upstream's do. The key is public: never ship a release signed with it.
-  `.env` comes from repository secrets when they're set, else stubs.
+  Their `.env` has stub API clients only: `.env` is packed into the APK and artifacts of a
+  public repository are downloadable by anyone, so real tracker keys must not go there.
 - `.github/workflows/build.yml` — upstream release builds, on tags only.
 
 ## Branches
