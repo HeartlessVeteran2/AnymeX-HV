@@ -128,11 +128,14 @@ fixed up in the PRs listed under *Other fixes*.
     finished;
   - a failed next chapter now shows a message, once;
   - reading downloaded chapters in continuous mode kept every page in memory until the app
-    closed, which could crash it on long chapters (an upstream bug).
+    closed, which could crash it on long chapters (an upstream bug);
+  - a slow chapter you had already left could finish loading and replace the pages or error of
+    the chapter you opened next (an upstream bug).
 
   [#10](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/10),
   [#16](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/16),
-  [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21)
+  [#21](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/21),
+  [#26](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/26)
 - **Recommendations:** a failed load was cached as "no recommendations" for 24 hours, and saving
   the results could turn a successful load into an error.
   [#12](https://github.com/HeartlessVeteran2/AnymeX-HV/pull/12),

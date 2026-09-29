@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anymex/database/isar_models/chapter.dart';
 import 'package:anymex/database/kv_helper.dart';
+import 'package:anymex/hv/common/core/latest_only.dart';
 import 'package:anymex/hv/common/hv_keys.dart';
 import 'package:anymex/hv/reader/core/dual_page.dart';
 import 'package:anymex/hv/reader/reader_downloads_service.dart';
@@ -171,6 +172,19 @@ class HvReaderHooks {
       snackBar(message);
     }
   }
+
+  static final Expando<HvLatestOnly> _pageLoads = Expando('hvPageLoads');
+
+  /// Starts loading a chapter's pages and returns the load's number.
+  ///
+  /// A load can take up to a minute (a slow source, or the time limit), so it
+  /// may finish after the user opened another chapter. Only the newest load
+  /// may then set the pages or the error; see [isLatestPageLoad].
+  static int beginPageLoad(ReaderController c) =>
+      (_pageLoads[c] ??= HvLatestOnly()).begin();
+
+  static bool isLatestPageLoad(ReaderController c, int load) =>
+      _pageLoads[c]?.isCurrent(load) ?? true;
 
   // ---- settings -----------------------------------------------------------
 

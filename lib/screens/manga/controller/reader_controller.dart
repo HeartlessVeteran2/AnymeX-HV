@@ -1861,6 +1861,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
 
   Future<void> fetchImages(String url, {bool initialAtBottom = false}) async {
     final curChapter = currentChapter.value;
+    final hvLoad = HvReaderHooks.beginPageLoad(this); // HV: a newer load wins
     _isNavigating = true;
     _resetOverscroll();
     WidgetsBinding.instance.addPostFrameCallback((_) => _initTracking());
@@ -1898,6 +1899,7 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
             action: 'Loading pages',
             limit: HvSourceTimeouts.pages);
       }
+      if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
       if (data.isNotEmpty) {
         pageList.assignAll(data);
         loadingState.value = LoadingState.loaded;
@@ -1939,10 +1941,12 @@ class ReaderController extends GetxController with WidgetsBindingObserver {
       }
     } catch (e) {
       Logger.i('Error fetching images: ${e.toString()}');
+      if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
       loadingState.value = LoadingState.error;
       errorMessage.value = hvPageLoadErrorMessage(e); // HV: one short line
     } finally {
       Future.delayed(const Duration(milliseconds: 200), () {
+        if (!HvReaderHooks.isLatestPageLoad(this, hvLoad)) return; // HV
         _isNavigating = false;
         _syncAvailability();
       });
